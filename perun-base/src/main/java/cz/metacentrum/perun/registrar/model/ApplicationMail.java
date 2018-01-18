@@ -75,7 +75,17 @@ public class ApplicationMail {
 		/**
 		 * Notification to User with invitation to VO / group
 		 */
-		USER_INVITE;
+		USER_INVITE,
+
+		/**
+		 * Notification to User, that his/her account will expire
+		 */
+		USER_WILL_EXPIRE,
+
+		/**
+		 * Notification to User, that his/her account expired
+		 */
+		USER_EXPIRED;
 
 	}
 

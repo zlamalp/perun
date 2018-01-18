@@ -216,21 +216,30 @@ public class CreateMailTabItem implements TabItem {
 		}
 
 		int initialIndex = 0;
+		int extensionIndex = 0;
 		applicationTypeListbox.clear();
 		for (Application.ApplicationType type : Application.ApplicationType.values()) {
 			applicationTypeListbox.addItem(Application.getTranslatedType(type.toString()), type.toString());
 			if (type.equals(Application.ApplicationType.INITIAL)) {
 				initialIndex = applicationTypeListbox.getItemCount()-1;
 			}
+			if (type.equals(Application.ApplicationType.EXTENSION)) {
+				extensionIndex = applicationTypeListbox.getItemCount()-1;
+			}
 		}
 
 		final int initIndex = initialIndex;
+		final int extIndex = extensionIndex;
 		mailTypeListbox.addChangeHandler(new ChangeHandler() {
 			@Override
 			public void onChange(ChangeEvent event) {
 				if (mailTypeListbox.getValue(mailTypeListbox.getSelectedIndex()).equals("USER_INVITE")) {
 					applicationTypeListbox.setEnabled(false);
 					applicationTypeListbox.setSelectedIndex(initIndex);
+				} if (mailTypeListbox.getValue(mailTypeListbox.getSelectedIndex()).equals("USER_WILL_EXPIRE") ||
+						mailTypeListbox.getValue(mailTypeListbox.getSelectedIndex()).equals("USER_EXPIRED")) {
+					applicationTypeListbox.setEnabled(false);
+					applicationTypeListbox.setSelectedIndex(extIndex);
 				} else {
 					applicationTypeListbox.setEnabled(true);
 				}

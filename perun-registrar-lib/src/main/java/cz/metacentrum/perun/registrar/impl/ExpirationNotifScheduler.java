@@ -1,11 +1,13 @@
 package cz.metacentrum.perun.registrar.impl;
 
 import cz.metacentrum.perun.core.api.ExtSourcesManager;
+import cz.metacentrum.perun.core.api.Group;
 import cz.metacentrum.perun.core.api.Member;
 import cz.metacentrum.perun.core.api.PerunClient;
 import cz.metacentrum.perun.core.api.PerunPrincipal;
 import cz.metacentrum.perun.core.api.PerunSession;
 import cz.metacentrum.perun.core.api.Status;
+import cz.metacentrum.perun.core.api.User;
 import cz.metacentrum.perun.core.api.Vo;
 import cz.metacentrum.perun.core.api.exceptions.AttributeNotExistsException;
 import cz.metacentrum.perun.core.api.exceptions.ExtendMembershipException;
@@ -16,7 +18,9 @@ import cz.metacentrum.perun.core.api.exceptions.WrongAttributeValueException;
 import cz.metacentrum.perun.core.api.exceptions.WrongReferenceAttributeValueException;
 import cz.metacentrum.perun.core.bl.PerunBl;
 import cz.metacentrum.perun.core.impl.Synchronizer;
+import cz.metacentrum.perun.registrar.MailManager;
 import cz.metacentrum.perun.registrar.model.Application;
+import cz.metacentrum.perun.registrar.model.ApplicationMail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +37,8 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * Check current membership expiration and notify about future/past expirations.
+ *
  * @author Pavel Zlámal <zlamal@cesnet.cz>
  */
 public class ExpirationNotifScheduler {
@@ -41,7 +47,17 @@ public class ExpirationNotifScheduler {
 	private PerunSession sess;
 
 	private PerunBl perun;
+	private MailManager mailManager;
 	private JdbcPerunTemplate jdbc;
+
+	public MailManager getMailManager() {
+		return mailManager;
+	}
+
+	@Autowired
+	public void setMailManager(MailManager mailManager) {
+		this.mailManager = mailManager;
+	}
 
 	@Autowired
 	public void setDataSource(DataSource dataSource) {
@@ -55,6 +71,14 @@ public class ExpirationNotifScheduler {
 	@Autowired
 	public void setPerun(PerunBl perun) {
 		this.perun = perun;
+	}
+
+	// Only members with following statuses will be notified
+	private final static List<Status> allowedStatuses = new ArrayList<Status>();
+
+	static{
+		allowedStatuses.add(Status.VALID);
+		allowedStatuses.add(Status.SUSPENDED);
 	}
 
 	public ExpirationNotifScheduler() {
@@ -96,11 +120,6 @@ public class ExpirationNotifScheduler {
 
 			log.debug("Processing checkMemberState() on (to be) expired members.");
 
-			// Only members with following statuses will be notified
-			List<Status> allowedStatuses = new ArrayList<Status>();
-			allowedStatuses.add(Status.VALID);
-			allowedStatuses.add(Status.SUSPENDED);
-
 			// get all available VOs
 			List<Vo> vos = perun.getVosManagerBl().getVos(sess);
 			Map<Integer, Vo> vosMap = new HashMap<Integer, Vo>();
@@ -111,33 +130,11 @@ public class ExpirationNotifScheduler {
 			Calendar monthBefore = Calendar.getInstance();
 			monthBefore.add(Calendar.MONTH, 1);
 
-			// log message for all members which will expire in 30 days
+			// log message for all members which will expire in a month
 
 			List<Member> expireInAMonth = perun.getSearcherBl().getMembersByExpiration(sess, "=", monthBefore);
 			for (Member m : expireInAMonth) {
-				try {
-					if (allowedStatuses.contains(m.getStatus())) {
-						perun.getMembersManagerBl().canExtendMembershipWithReason(sess, m);
-						if (didntSubmitExtensionApplication(m)) {
-							// still didn't apply for extension
-							getPerun().getAuditer().log(sess, "{} will expire in a month in {}.", m, vosMap.get(m.getVoId()));
-						} else {
-							log.debug("{} not notified about expiration, has submitted - pending application.", m);
-						}
-					} else {
-						log.debug("{} not notified about expiration, is not in VALID or SUSPENDED state.", m);
-					}
-				} catch (ExtendMembershipException ex) {
-					if (!Objects.equals(ex.getReason(), ExtendMembershipException.Reason.OUTSIDEEXTENSIONPERIOD)) {
-						// we don't care about other reasons (LoA), user can update it later
-						if (didntSubmitExtensionApplication(m)) {
-							// still didn't apply for extension
-							getPerun().getAuditer().log(sess, "{} will expire in a month in {}.", m, vosMap.get(m.getVoId()));
-						} else {
-							log.debug("{} not notified about expiration, has submitted - pending application.", m);
-						}
-					}
-				}
+				notifyAboutFutureExpiration(vosMap.get(m.getVoId()), m, "{} will expire in a month in {}.");
 			}
 
 			// log message for all members which will expire in 14 days
@@ -145,29 +142,7 @@ public class ExpirationNotifScheduler {
 			expireInA14Days.add(Calendar.DAY_OF_MONTH, 14);
 			List<Member> expireIn14Days = perun.getSearcherBl().getMembersByExpiration(sess, "=", expireInA14Days);
 			for (Member m : expireIn14Days) {
-				try {
-					if (allowedStatuses.contains(m.getStatus())) {
-						perun.getMembersManagerBl().canExtendMembershipWithReason(sess, m);
-						if (didntSubmitExtensionApplication(m)) {
-							// still didn't apply for extension
-							getPerun().getAuditer().log(sess, "{} will expire in {} days in {}.", m, 14, vosMap.get(m.getVoId()));
-						} else {
-							log.debug("{} not notified about expiration, has submitted - pending application.", m);
-						}
-					} else {
-						log.debug("{} not notified about expiration, is not in VALID or SUSPENDED state.", m);
-					}
-				} catch (ExtendMembershipException ex) {
-					if (!Objects.equals(ex.getReason(), ExtendMembershipException.Reason.OUTSIDEEXTENSIONPERIOD)) {
-						// we don't care about other reasons (LoA), user can update it later
-						if (didntSubmitExtensionApplication(m)) {
-							// still didn't apply for extension
-							getPerun().getAuditer().log(sess, "{} will expire in {} days in {}.", m, 14, vosMap.get(m.getVoId()));
-						} else {
-							log.debug("{} not notified about expiration, has submitted - pending application.", m);
-						}
-					}
-				}
+				notifyAboutFutureExpiration(vosMap.get(m.getVoId()), m, "{} will expire in 14 days in {}.");
 			}
 
 			// log message for all members which will expire in 7 days
@@ -175,29 +150,7 @@ public class ExpirationNotifScheduler {
 			expireInA7Days.add(Calendar.DAY_OF_MONTH, 7);
 			List<Member> expireIn7Days = perun.getSearcherBl().getMembersByExpiration(sess, "=", expireInA7Days);
 			for (Member m : expireIn7Days) {
-				try {
-					if (allowedStatuses.contains(m.getStatus())) {
-						perun.getMembersManagerBl().canExtendMembershipWithReason(sess, m);
-						if (didntSubmitExtensionApplication(m)) {
-							// still didn't apply for extension
-							getPerun().getAuditer().log(sess, "{} will expire in {} days in {}.", m, 7, vosMap.get(m.getVoId()));
-						} else {
-							log.debug("{} not notified about expiration, has submitted - pending application.", m);
-						}
-					} else {
-						log.debug("{} not notified about expiration, is not in VALID or SUSPENDED state.", m);
-					}
-				} catch (ExtendMembershipException ex) {
-					if (!Objects.equals(ex.getReason(), ExtendMembershipException.Reason.OUTSIDEEXTENSIONPERIOD)) {
-						// we don't care about other reasons (LoA), user can update it later
-						if (didntSubmitExtensionApplication(m)) {
-							// still didn't apply for extension
-							getPerun().getAuditer().log(sess, "{} will expire in {} days in {}.", m, 7, vosMap.get(m.getVoId()));
-						} else {
-							log.debug("{} not notified about expiration, has submitted - pending application.", m);
-						}
-					}
-				}
+				notifyAboutFutureExpiration(vosMap.get(m.getVoId()), m, "{} will expire in 7 days in {}.");
 			}
 
 			// log message for all members which will expire tomorrow
@@ -205,42 +158,19 @@ public class ExpirationNotifScheduler {
 			expireInADay.add(Calendar.DAY_OF_MONTH, 1);
 			List<Member> expireIn1Days = perun.getSearcherBl().getMembersByExpiration(sess, "=", expireInADay);
 			for (Member m : expireIn1Days) {
-				try {
-					if (allowedStatuses.contains(m.getStatus())) {
-						perun.getMembersManagerBl().canExtendMembershipWithReason(sess, m);
-						if (didntSubmitExtensionApplication(m)) {
-							// still didn't apply for extension
-							getPerun().getAuditer().log(sess, "{} will expire in {} days in {}.", m, 1, vosMap.get(m.getVoId()));
-						} else {
-							log.debug("{} not notified about expiration, has submitted - pending application.", m);
-						}
-					} else {
-						log.debug("{} not notified about expiration, is not in VALID or SUSPENDED state.", m);
-					}
-				} catch (ExtendMembershipException ex) {
-					if (!Objects.equals(ex.getReason(), ExtendMembershipException.Reason.OUTSIDEEXTENSIONPERIOD)) {
-						// we don't care about other reasons (LoA), user can update it later
-						if (didntSubmitExtensionApplication(m)) {
-							// still didn't apply for extension
-							getPerun().getAuditer().log(sess, "{} will expire in {} days in {}.", m, 1, vosMap.get(m.getVoId()));
-						} else {
-							log.debug("{} not notified about expiration, has submitted - pending application.", m);
-						}
-					}
-				}
+				notifyAboutFutureExpiration(vosMap.get(m.getVoId()), m, "{} will expire in 1 days in {}.");
 			}
 
 			// log message for all members which expired 7 days ago
 			Calendar expiredWeekAgo = Calendar.getInstance();
 			expiredWeekAgo.add(Calendar.DAY_OF_MONTH, -7);
 			List<Member> expired7DaysAgo = perun.getSearcherBl().getMembersByExpiration(sess, "=", expiredWeekAgo);
-			// include expired in this case
-			allowedStatuses.add(Status.EXPIRED);
 			for (Member m : expired7DaysAgo) {
-				if (allowedStatuses.contains(m.getStatus())) {
+				if (Arrays.asList(Status.VALID, Status.SUSPENDED, Status.EXPIRED).contains(m.getStatus())) {
 					if (didntSubmitExtensionApplication(m)) {
 						// still didn't apply for extension
 						getPerun().getAuditer().log(sess, "{} has expired {} days ago in {}.", m, 7, vosMap.get(m.getVoId()));
+						sendExpirationNotification(vosMap.get(m.getVoId()), null, m, ApplicationMail.MailType.USER_EXPIRED);
 					} else {
 						log.debug("{} not notified about expiration, has submitted - pending application.", m);
 					}
@@ -288,6 +218,44 @@ public class ExpirationNotifScheduler {
 	}
 
 	/**
+	 * Check if member should be notified about future expiration and do it
+	 *
+	 * @param vo VO member is from
+	 * @param member Member to notify
+	 * @param auditerMessage Text of auditer message to use
+	 * @throws InternalErrorException When implementation fails
+	 */
+	private void notifyAboutFutureExpiration(Vo vo, Member member, String auditerMessage) throws InternalErrorException {
+
+		try {
+			if (allowedStatuses.contains(member.getStatus())) {
+				perun.getMembersManagerBl().canExtendMembershipWithReason(sess, member);
+				if (didntSubmitExtensionApplication(member)) {
+					// still didn't apply for extension
+					getPerun().getAuditer().log(sess, auditerMessage, member, vo);
+					sendExpirationNotification(vo, null, member, ApplicationMail.MailType.USER_WILL_EXPIRE);
+				} else {
+					log.debug("{} not notified about expiration, has submitted - pending application.", member);
+				}
+			} else {
+				log.debug("{} not notified about expiration, is not in VALID or SUSPENDED state.", member);
+			}
+		} catch (ExtendMembershipException ex) {
+			if (!Objects.equals(ex.getReason(), ExtendMembershipException.Reason.OUTSIDEEXTENSIONPERIOD)) {
+				// we don't care about other reasons (LoA), user can update it later
+				if (didntSubmitExtensionApplication(member)) {
+					// still didn't apply for extension
+					getPerun().getAuditer().log(sess, auditerMessage, member, vo);
+					sendExpirationNotification(vo, null, member, ApplicationMail.MailType.USER_WILL_EXPIRE);
+				} else {
+					log.debug("{} not notified about expiration, has submitted - pending application.", member);
+				}
+			}
+		}
+
+	}
+
+	/**
 	 * Check if member didn't submit new extension application - in such case, do not send expiration notifications
 	 *
 	 * @param member Member to check applications for
@@ -304,6 +272,27 @@ public class ExpirationNotifScheduler {
 		} catch (Exception ex) {
 			log.error("Unable to check if {} has submitted pending application: {}.", member, ex);
 			return true;
+		}
+
+	}
+
+	/**
+	 * Send expiration notifications using new way - defined per VO / group
+	 *
+	 * @param vo VO to relate notification to
+	 * @param group Group to relate notification to
+	 * @param member Member to notify to
+	 * @param mailType Type of notification (will expire / expired)
+	 */
+	private void sendExpirationNotification(Vo vo, Group group, Member member, ApplicationMail.MailType mailType) {
+
+		try {
+
+			User user = perun.getUsersManagerBl().getUserByMember(sess, member);
+			mailManager.sendExpirationInternal(vo, group, user, member, mailType);
+
+		} catch (Exception ex) {
+			log.error("Unable to send notification using new way! {}", ex);
 		}
 
 	}

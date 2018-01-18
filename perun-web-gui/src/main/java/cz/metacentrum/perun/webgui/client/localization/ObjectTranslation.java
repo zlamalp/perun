@@ -55,6 +55,12 @@ public interface ObjectTranslation extends Messages {
 	@DefaultMessage("Invitation / user")
 	String applicationMailTypeInvitationUser();
 
+	@DefaultMessage("Expiration / user")
+	String applicationMailTypeExpirationUser();
+
+	@DefaultMessage("Already expired / user")
+	String applicationMailTypeExpiredUser();
+
 	/* ========== OWNER OBJECT ============ */
 
 	@DefaultMessage("administrative")

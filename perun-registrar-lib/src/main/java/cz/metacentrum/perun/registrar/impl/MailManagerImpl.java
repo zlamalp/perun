@@ -17,6 +17,7 @@ import cz.metacentrum.perun.core.api.*;
 import cz.metacentrum.perun.core.api.exceptions.*;
 import cz.metacentrum.perun.core.impl.Compatibility;
 import cz.metacentrum.perun.registrar.exceptions.RegistrarException;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +66,8 @@ public class MailManagerImpl implements MailManager {
 	private static final String URN_GROUP_LANGUAGE_EMAIL = "urn:perun:group:attribute-def:def:notificationsDefLang";
 	private static final String URN_VO_REGISTRATION_URL = "urn:perun:vo:attribute-def:def:registrarURL";
 	private static final String URN_GROUP_REGISTRATION_URL = "urn:perun:group:attribute-def:def:registrarURL";
+
+	protected static final String URN_VO_USER_MAIL_SOURCE_ATTR_NAME = "urn:perun:vo:attribute-def:def:userMailSourceAttrName";
 
 	@Autowired PerunBl perun;
 	@Autowired RegistrarManager registrarManager;
@@ -1052,7 +1055,7 @@ public class MailManagerImpl implements MailManager {
 				email = BeansUtils.attributeValueToString(a);
 			}
 		} catch (Exception ex) {
-			log.error("[MAIL MANAGER] Exception thrown when getting preferred language of notification for Group={}: {}", group, ex);
+			log.error("[MAIL MANAGER] Exception thrown when getting users preferred mail for notifications, {} {}", user, ex);
 		}
 
 		message.setTo(email);
@@ -1068,6 +1071,191 @@ public class MailManagerImpl implements MailManager {
 			log.info("[MAIL MANAGER] Sending mail: USER_INVITE to: {} / " + app.getVo() + " / " + app.getGroup(), message.getTo());
 		} catch (MailException ex) {
 			log.error("[MAIL MANAGER] Sending mail: USER_INVITE failed because of exception: {}", ex);
+			throw new RegistrarException("Unable to send e-mail.", ex);
+		}
+
+	}
+
+	@Override
+	public void sendExpiration(PerunSession sess, Vo vo, Group group, User user, Member member, MailType mailType) throws PerunException {
+
+		if (group == null) {
+			if (!AuthzResolver.isAuthorized(sess, Role.VOADMIN, vo)) {
+				throw new PrivilegeException(sess, "sendExpiration");
+			}
+		} else {
+			if (!AuthzResolver.isAuthorized(sess, Role.VOADMIN, group) && !AuthzResolver.isAuthorized(sess, Role.GROUPADMIN, group)) {
+				throw new PrivilegeException(sess, "sendExpiration");
+			}
+		}
+
+		sendExpirationInternal(vo, group, user, member, mailType);
+
+	}
+
+	public void sendExpirationInternal(Vo vo, Group group, User user, Member member, MailType mailType) throws PerunException {
+
+		if (user == null) throw new RegistrarException("Missing user to send notification to.");
+
+		if (!Arrays.asList(MailType.USER_WILL_EXPIRE, MailType.USER_EXPIRED).contains(mailType)) {
+			throw new RegistrarException("Wrong mail type for sending expiration notice - only USER_WILL_EXPIRE and USER_EXPIRED is allowed.");
+		}
+
+		try {
+			// re-check member
+			member = membersManager.getMemberByUser(registrarSession, vo, user);
+			if (group != null) {
+				List<Group> g = groupsManager.getMemberGroups(registrarSession, member);
+				if (!g.contains(group)) {
+					// user is not member of a group - can't notify about expiration
+					throw new RegistrarException("User to send expiration notice is not member of your group: "+group.getShortName());
+				}
+			}
+
+		} catch (MemberNotExistsException ex) {
+			throw new RegistrarException("User to send expiration notice is not member of your vo: "+vo.getShortName());
+		} catch (Exception ex) {
+			log.error("[MAIL MANAGER] Exception {} when getting member by {} from "+vo.toString(), ex, user);
+			throw new RegistrarException("Failed to determine users vo membership.");
+		}
+
+		// get form
+		ApplicationForm form;
+		if (group != null) {
+			form = registrarManager.getFormForGroup(group);
+		} else {
+			form = registrarManager.getFormForVo(vo);
+		}
+
+		// get mail definition
+		ApplicationMail mail = getMailByParams(form.getId(), AppType.EXTENSION, mailType);
+		if (mail == null) {
+			throw new RegistrarException("You don't have expiration e-mail template defined for: " + mailType.name());
+		} else if (mail.getSend() == false) {
+			throw new RegistrarException("Sending of expiration notice is disabled.");
+		}
+
+		String language = "en";
+
+		try {
+			Attribute a = attrManager.getAttribute(registrarSession, user, URN_USER_PREFERRED_LANGUAGE);
+			if (a != null && a.getValue() != null) {
+				language = BeansUtils.attributeValueToString(a);
+			}
+		} catch (Exception ex) {
+			log.error("[MAIL MANAGER] Exception thrown when getting preferred language for USER={}: {}", user, ex);
+		}
+
+		if (group == null) {
+
+			try {
+				Attribute a = attrManager.getAttribute(registrarSession, vo, URN_VO_LANGUAGE_EMAIL);
+				if (a != null && a.getValue() != null) {
+					language = BeansUtils.attributeValueToString(a);
+				}
+			} catch (Exception ex) {
+				log.error("[MAIL MANAGER] Exception thrown when getting preferred language of notification for VO={}: {}", vo, ex);
+			}
+
+		} else {
+
+			try {
+				Attribute a = attrManager.getAttribute(registrarSession, group, URN_GROUP_LANGUAGE_EMAIL);
+				if (a != null && a.getValue() != null) {
+					language = BeansUtils.attributeValueToString(a);
+				}
+			} catch (Exception ex) {
+				log.error("[MAIL MANAGER] Exception thrown when getting preferred language of notification for Group={}: {}", group, ex);
+			}
+
+		}
+
+		// get language
+		Locale lang = new Locale(language);
+		// get localized subject and text
+		MailText mt = mail.getMessage(lang);
+		String mailText = "";
+		String mailSubject = "";
+		if (mt.getText() != null && !mt.getText().isEmpty()) {
+			mailText = mt.getText();
+		}
+		if (mt.getSubject() != null && !mt.getSubject().isEmpty()) {
+			mailSubject = mt.getSubject();
+		}
+
+		SimpleMailMessage message = new SimpleMailMessage();
+
+		// fake app to get "from" address
+		Application app = new Application();
+		app.setVo(vo);
+		app.setGroup(group);
+		// get from
+		setFromMailAddress(message, app);
+
+		String email = "";
+
+		// resolve address to send notification to...
+		try {
+
+			// check if VO forces usage of different user/member attribute to send notifications too..
+			String mailSourceAttrName = "";
+			Attribute a = attrManager.getAttribute(registrarSession, user, URN_VO_USER_MAIL_SOURCE_ATTR_NAME);
+			if (a != null && a.getValue() != null) {
+				mailSourceAttrName = BeansUtils.attributeValueToString(a);
+			}
+
+			if (StringUtils.isNotBlank(mailSourceAttrName)) {
+
+				Attribute attr = null;
+
+				if (mailSourceAttrName.startsWith(AttributesManager.NS_USER_ATTR)) {
+					attr = attrManager.getAttribute(registrarSession, user, mailSourceAttrName);
+				} else if (mailSourceAttrName.startsWith(AttributesManager.NS_MEMBER_ATTR)) {
+					attr = attrManager.getAttribute(registrarSession, member, mailSourceAttrName);
+				} else {
+					// TODO: lets use attr value directly for testing purpose
+					email = mailSourceAttrName;
+				}
+
+				// if value exists, use it as to mail
+				if (attr != null && attr.getValue() != null) {
+					email = BeansUtils.attributeValueToString(attr);
+				}
+
+			}
+
+		} catch (Exception ex) {
+			log.error("[MAIL MANAGER] Exception thrown when getting users mail address to send expiration notice to. VO: {} / User: {} / Exception: {}", vo, user, ex);
+		}
+
+		// preferred TO mail not resolved ?
+		if (StringUtils.isBlank(email)) {
+
+			// just get users preferred mail !!
+			try {
+				Attribute prefMail = attrManager.getAttribute(registrarSession, user, URN_USER_PREFERRED_MAIL);
+				if (prefMail != null && prefMail.getValue() != null) {
+					email = BeansUtils.attributeValueToString(prefMail);
+				}
+			} catch (Exception ex) {
+				log.error("[MAIL MANAGER] Exception thrown when getting users mail address to send expiration notice to. VO: {} / User: {} / Exception: {}", vo, user, ex);
+			}
+
+		}
+
+		message.setTo(email);
+
+		mailText = substituteCommonStringsForExpiration(vo, group, user, member, mailText);
+		mailSubject = substituteCommonStringsForExpiration(vo, group, user, member, mailSubject);
+
+		message.setSubject(mailSubject);
+		message.setText(mailText);
+
+		try {
+			mailSender.send(message);
+			log.info("[MAIL MANAGER] Sending mail: " + mailType.name() + " to: {} / {} / {}", message.getTo(), app.getVo(), app.getGroup());
+		} catch (MailException ex) {
+			log.error("[MAIL MANAGER] Sending mail: " + mailType.name() + " failed because of exception: {}", ex);
 			throw new RegistrarException("Unable to send e-mail.", ex);
 		}
 
@@ -1528,6 +1716,146 @@ public class MailManagerImpl implements MailManager {
 		return text;
 
 	}
+
+	/**
+	 * Substitute common string in expiration notifications
+	 *
+	 * {voName} - full vo name
+	 * {groupName} - group short name
+	 * {displayName} - user's display name returned from federation if present on form
+	 * {firstName} - first name of user if present on form as separate form item
+	 * {lastName} - last name of user if present on form as separate form item
+	 * {membershipExpiration} - membership expiration date
+	 * {mailFooter} - common VO/Group footer for notifications
+	 *
+	 * @param vo VO to relate notification to
+	 * @param group Group to relate notification to
+	 * @param user User to send notification to
+	 * @param member Member related to User and VO/Group
+	 * @param mailText Original mail text to have tags substitued
+	 * @return Mail text with substitued common string
+	 */
+	private String substituteCommonStringsForExpiration(Vo vo, Group group, User user, Member member, String mailText) {
+
+		if (mailText.contains("{voName}")) {
+			if (vo != null) {
+				mailText = mailText.replace("{voName}", vo.getName());
+			} else {
+				mailText = mailText.replace("{voName}", "");
+			}
+		}
+
+		if (mailText.contains("{groupName}")) {
+			if (group != null) {
+				mailText = mailText.replace("{groupName}", group.getShortName());
+			} else {
+				mailText = mailText.replace("{groupName}", "");
+			}
+		}
+
+		if (user != null) {
+			mailText = mailText.replace("{displayName}", user.getDisplayName());
+		}
+		if (user != null) {
+			mailText = mailText.replace("{firstName}", user.getFirstName());
+		}
+		if (user != null) {
+			mailText = mailText.replace("{lastName}", user.getLastName());
+		}
+
+		if (mailText.contains("{membershipExpiration}")) {
+			String expiration = "";
+			if (member != null) {
+				try {
+					Attribute a = attrManager.getAttribute(registrarSession, member, URN_MEMBER_EXPIRATION);
+					if (a != null && a.getValue() != null) {
+						// attribute value is string
+						expiration = ((String)a.getValue());
+					}
+				} catch (Exception ex) {
+					log.error("[MAIL MANAGER] Error thrown when getting membership expiration param for mail. {}", ex);
+				}
+			}
+			// replace by date or empty
+			mailText = mailText.replace("{membershipExpiration}", expiration);
+		}
+
+		// replace logins
+		if (mailText.contains("{login-")) {
+
+			Pattern pattern = Pattern.compile("\\{login-[^\\}]+\\}");
+			Matcher m = pattern.matcher(mailText);
+			while (m.find()) {
+
+				// whole "{login-something}"
+				String toSubstitute = m.group(0);
+
+				// new login value to replace in text
+				String newValue = "";
+
+				Pattern namespacePattern = Pattern.compile("\\-(.*?)\\}");
+				Matcher m2 = namespacePattern.matcher(toSubstitute);
+				while (m2.find()) {
+					// only namespace "meta", "egi-ui",...
+					String namespace = m2.group(1);
+
+					// if user exists, try to get login from attribute instead of application
+					// since we do no allow to overwrite login by application
+					try {
+						if (user != null) {
+							List<Attribute> logins = attrManager.getLogins(registrarSession, user);
+							for (Attribute a : logins) {
+								// replace only correct namespace
+								if (a.getFriendlyNameParameter().equalsIgnoreCase(namespace)) {
+									if (a.getValue() != null) {
+										newValue = BeansUtils.attributeValueToString(a);
+										break;
+									}
+								}
+							}
+						}
+					} catch (Exception ex) {
+						log.error("[MAIL MANAGER] Error thrown when replacing login in namespace \""+namespace+"\" for mail. {}", ex);
+					}
+
+				}
+
+				// substitute {login-namespace} with actual value or empty string
+				mailText = mailText.replace(toSubstitute, newValue);
+
+			}
+
+		}
+
+		// mail footer
+		if (mailText.contains("{mailFooter}")) {
+			String footer = "";
+			// get proper value from attribute
+			try {
+				Attribute attribute;
+				if (group != null) {
+					attribute = attrManager.getAttribute(registrarSession, group, URN_GROUP_MAIL_FOOTER);
+					if (attribute == null || attribute.getValue() == null) {
+						attribute = attrManager.getAttribute(registrarSession, vo, URN_VO_MAIL_FOOTER);
+					}
+				} else {
+					attribute = attrManager.getAttribute(registrarSession, vo, URN_VO_MAIL_FOOTER);
+				}
+				if (attribute != null && attribute.getValue() != null) {
+					footer = BeansUtils.attributeValueToString(attribute);
+				}
+			} catch (Exception ex) {
+				// we dont care about exceptions here
+				log.error("[MAIL MANAGER] Exception thrown when getting VO's footer for email from attribute.", ex);
+			}
+			// replace by footer or empty
+			mailText = mailText.replace("{mailFooter}", (footer != null) ? footer : "");
+		}
+
+		return mailText;
+
+	}
+
 
 	/**
 	 * Substitute common strings in mail text by data provided by

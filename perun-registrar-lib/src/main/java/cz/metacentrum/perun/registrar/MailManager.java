@@ -3,6 +3,7 @@ package cz.metacentrum.perun.registrar;
 import java.util.List;
 
 import cz.metacentrum.perun.core.api.Group;
+import cz.metacentrum.perun.core.api.Member;
 import cz.metacentrum.perun.core.api.PerunSession;
 import cz.metacentrum.perun.core.api.User;
 import cz.metacentrum.perun.core.api.Vo;
@@ -176,6 +177,31 @@ public interface MailManager {
 	 * @throws PerunException
 	 */
 	public void sendInvitation(PerunSession sess, Vo vo, Group group, User user) throws PerunException;
+
+	/**
+	 * Sends notification about future/past membership expiration in a VO
+	 *
+	 * @param sess PerunSession with authz
+	 * @param vo VO to relate user to
+	 * @param group Group to relate user to
+	 * @param user User to send expiration notice
+	 * @param member Member to send expiration notice
+	 * @param mailType Type of mail USER_WILL_EXPIRE or USER_EXPIRED
+	 * @throws PerunException
+	 */
+	public void sendExpiration(PerunSession sess, Vo vo, Group group, User user, Member member, MailType mailType) throws PerunException;
+
+	/**
+	 * Sends notification about future/past membership expiration in a VO
+	 *
+	 * @param vo VO to relate user to
+	 * @param group Group to relate user to
+	 * @param user User to send expiration notice
+	 * @param member Member to send expiration notice
+	 * @param mailType Type of mail USER_WILL_EXPIRE or USER_EXPIRED
+	 * @throws PerunException
+	 */
+	public void sendExpirationInternal(Vo vo, Group group, User user, Member member, MailType mailType) throws PerunException;
 
 	/**
 	 * Creates a MAC with a hard-compiled secret key encoded to printable characters.
