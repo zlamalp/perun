@@ -83,6 +83,7 @@ public class CoreConfig {
 	private List<String> attributesToSearchUsersAndMembersBy;
 	private List<String> attributesToAnonymize;
 	private List<String> attributesToKeep;
+	private boolean isCsrfEnabled;
 
 	public int getGroupMaxConcurentGroupsToSynchronize() {
 		return groupMaxConcurentGroupsToSynchronize;
@@ -693,4 +694,13 @@ public class CoreConfig {
 	public void setAttributesToKeep(List<String> attributesToKeep) {
 		this.attributesToKeep = attributesToKeep;
 	}
+
+	public boolean isCsrfEnabled() {
+		return isCsrfEnabled;
+	}
+
+	public void setCsrfEnabled(boolean csrfEnabled) {
+		isCsrfEnabled = csrfEnabled;
+	}
+
 }
