@@ -449,6 +449,7 @@ public class Api extends HttpServlet {
 		if (checkOriginHeader(req,resp)) {
 			resp.setHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 			resp.setHeader("Access-Control-Allow-Headers","Authorization, Content-Type");
+			resp.setHeader("Access-Control-Allow-Credentials", "true");
 			resp.setIntHeader("Access-Control-Max-Age",86400);
 		}
 		resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
