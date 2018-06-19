@@ -461,6 +461,7 @@ public class Api extends HttpServlet {
 	 * @param resp HttpServletResponse to modify
 	 */
 	private boolean checkOriginHeader(HttpServletRequest req, HttpServletResponse resp) {
+
 		String origin = req.getHeader("Origin");
 		log.trace("Incoming Origin header: {}", origin);
 
