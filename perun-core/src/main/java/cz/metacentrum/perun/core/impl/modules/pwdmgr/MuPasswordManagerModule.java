@@ -17,6 +17,7 @@ import cz.metacentrum.perun.core.bl.PerunBl;
 import cz.metacentrum.perun.core.implApi.modules.pwdmgr.PasswordManagerModule;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
@@ -96,6 +97,13 @@ public class MuPasswordManagerModule implements PasswordManagerModule {
 		}
 		checkPasswordStrength(session, "--not yet known--", password);
 
+		// FIXME - disabled since we don't want to call IS MU on IDM-TEST
+		// FIXME - assign DUMMY UCO!
+		String login = String.valueOf(RandomUtils.nextInt(9100000, 9200000));
+		HashMap<String,String> result = new HashMap<>();
+		result.put(PasswordManagerModule.LOGIN_PREFIX + "mu", login);
+		return result;
+		/*
 		try {
 			int requestID = (new Random()).nextInt(1000000) + 1;
 			InputStream response = makeCall(getGenerateAccountRequest(session, parameters, requestID), requestID);
@@ -104,6 +112,7 @@ public class MuPasswordManagerModule implements PasswordManagerModule {
 		} catch (IOException e) {
 			throw new InternalErrorException(e);
 		}
+		*/
 
 	}
 
@@ -126,6 +135,8 @@ public class MuPasswordManagerModule implements PasswordManagerModule {
 	public void changePassword(PerunSession sess, String userLogin, String newPassword) throws PasswordStrengthException {
 		checkPasswordStrength(sess, userLogin, newPassword);
 
+		// FIXME - disabled since we don't want to call IS MU on IDM-TEST
+		/*
 		try {
 			int requestID = (new Random()).nextInt(1000000) + 1;
 			InputStream response = makeCall(getPwdChangeRequest(sess, userLogin, newPassword, requestID), requestID);
@@ -134,6 +145,7 @@ public class MuPasswordManagerModule implements PasswordManagerModule {
 		} catch (IOException e) {
 			throw new InternalErrorException(e);
 		}
+		*/
 
 	}
 

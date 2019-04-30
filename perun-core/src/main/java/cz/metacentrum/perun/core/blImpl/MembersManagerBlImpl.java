@@ -2385,7 +2385,7 @@ public class MembersManagerBlImpl implements MembersManagerBl {
 			String defaultLanguage = "en";
 			sendAccountActivationLinkEmail(sess, sponsoredMember, data.getNamespace(), url, email, defaultLanguage);
 		}
-		
+
 		return sponsoredMember;
 	}
 
