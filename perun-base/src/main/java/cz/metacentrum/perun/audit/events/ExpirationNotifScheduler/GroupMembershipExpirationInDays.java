@@ -2,10 +2,12 @@ package cz.metacentrum.perun.audit.events.ExpirationNotifScheduler;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
+import cz.metacentrum.perun.audit.events.MemberEvent;
 import cz.metacentrum.perun.core.api.Group;
 import cz.metacentrum.perun.core.api.Member;
 
-public class GroupMembershipExpirationInDays extends AuditEvent implements EngineIgnoreEvent {
+public class GroupMembershipExpirationInDays extends AuditEvent implements EngineIgnoreEvent, MemberEvent, GroupEvent {
 
 	private Member member;
 	private int daysToExpiration;
@@ -23,6 +25,7 @@ public class GroupMembershipExpirationInDays extends AuditEvent implements Engin
 		this.message = formatMessage("%s will expire in %d days in %s.", member, daysToExpiration, group);
 	}
 
+	@Override
 	public Member getMember() {
 		return member;
 	}
@@ -31,6 +34,7 @@ public class GroupMembershipExpirationInDays extends AuditEvent implements Engin
 		return daysToExpiration;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}

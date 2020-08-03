@@ -1,9 +1,10 @@
 package cz.metacentrum.perun.audit.events.FacilityManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.HostEvent;
 import cz.metacentrum.perun.core.api.Host;
 
-public class HostRemovedForFacility extends AuditEvent {
+public class HostRemovedForFacility extends AuditEvent implements HostEvent {
 
 	private Host host;
 	private String message;
@@ -17,6 +18,7 @@ public class HostRemovedForFacility extends AuditEvent {
 		this.message = formatMessage("%s removed.", host);
 	}
 
+	@Override
 	public Host getHost() {
 		return host;
 	}

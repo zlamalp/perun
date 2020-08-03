@@ -2,10 +2,12 @@ package cz.metacentrum.perun.audit.events.ExtSourcesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.ExtSourceEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
 import cz.metacentrum.perun.core.api.ExtSource;
 import cz.metacentrum.perun.core.api.Group;
 
-public class ExtSourceRemovedFromGroup extends AuditEvent implements EngineIgnoreEvent {
+public class ExtSourceRemovedFromGroup extends AuditEvent implements EngineIgnoreEvent, GroupEvent, ExtSourceEvent {
 
 	private ExtSource source;
 	private Group group;
@@ -21,10 +23,12 @@ public class ExtSourceRemovedFromGroup extends AuditEvent implements EngineIgnor
 		this.message = formatMessage("%s removed from %s.", source, group);
 	}
 
-	public ExtSource getSource() {
+	@Override
+	public ExtSource getExtSource() {
 		return source;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}

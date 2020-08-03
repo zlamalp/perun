@@ -2,10 +2,12 @@ package cz.metacentrum.perun.audit.events.FacilityManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.FacilityEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
 import cz.metacentrum.perun.core.api.Facility;
 import cz.metacentrum.perun.core.api.Group;
 
-public class AdminGroupAddedForFacility extends AuditEvent implements EngineIgnoreEvent {
+public class AdminGroupAddedForFacility extends AuditEvent implements EngineIgnoreEvent, FacilityEvent, GroupEvent {
 
 	private Group group;
 	private Facility facility;
@@ -21,10 +23,12 @@ public class AdminGroupAddedForFacility extends AuditEvent implements EngineIgno
 		this.message = formatMessage("%s was added as admin of %s.", group, facility);
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}
 
+	@Override
 	public Facility getFacility() {
 		return facility;
 	}

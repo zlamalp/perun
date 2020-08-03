@@ -2,10 +2,12 @@ package cz.metacentrum.perun.audit.events.ExtSourcesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.ExtSourceEvent;
+import cz.metacentrum.perun.audit.events.VoEvent;
 import cz.metacentrum.perun.core.api.ExtSource;
 import cz.metacentrum.perun.core.api.Vo;
 
-public class ExtSourceRemovedFromVo extends AuditEvent implements EngineIgnoreEvent {
+public class ExtSourceRemovedFromVo extends AuditEvent implements EngineIgnoreEvent, ExtSourceEvent, VoEvent {
 
 	private ExtSource source;
 	private Vo vo;
@@ -21,10 +23,12 @@ public class ExtSourceRemovedFromVo extends AuditEvent implements EngineIgnoreEv
 		this.message = formatMessage("%s removed from %s.", source, vo);
 	}
 
-	public ExtSource getSource() {
+	@Override
+	public ExtSource getExtSource() {
 		return source;
 	}
 
+	@Override
 	public Vo getVo() {
 		return vo;
 	}

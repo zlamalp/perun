@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.ExtSourcesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.ExtSourceEvent;
 import cz.metacentrum.perun.core.api.ExtSource;
 
-public class ExtSourceCreated extends AuditEvent implements EngineIgnoreEvent {
+public class ExtSourceCreated extends AuditEvent implements EngineIgnoreEvent, ExtSourceEvent {
 
 	private ExtSource extSource;
 	private String message;
@@ -18,6 +19,7 @@ public class ExtSourceCreated extends AuditEvent implements EngineIgnoreEvent {
 		this.message = formatMessage("%s created.", extSource);
 	}
 
+	@Override
 	public ExtSource getExtSource() {
 		return extSource;
 	}
