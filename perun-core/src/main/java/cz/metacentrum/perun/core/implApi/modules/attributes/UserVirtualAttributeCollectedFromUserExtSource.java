@@ -191,15 +191,15 @@ public abstract class UserVirtualAttributeCollectedFromUserExtSource<T extends U
 			}
 		});
 		handleIdenfiers.add(auditEvent -> {
-			if (auditEvent instanceof AttributeRemovedForUes && ((AttributeRemovedForUes) auditEvent).getAttribute().getFriendlyName().equals(getSourceAttributeFriendlyName())) {
-				return ((AttributeRemovedForUes) auditEvent).getUes().getUserId();
+			if (auditEvent instanceof AttributeRemovedForUes && ((AttributeRemovedForUes) auditEvent).getAttributeDefinition().getFriendlyName().equals(getSourceAttributeFriendlyName())) {
+				return ((AttributeRemovedForUes) auditEvent).getUserExtSource().getUserId();
 			} else {
 				return null;
 			}
 		});
 		handleIdenfiers.add(auditEvent -> {
 			if (auditEvent instanceof AttributeSetForUes &&((AttributeSetForUes) auditEvent).getAttribute().getFriendlyName().equals(getSourceAttributeFriendlyName())) {
-				return ((AttributeSetForUes) auditEvent).getUes().getUserId();
+				return ((AttributeSetForUes) auditEvent).getUserExtSource().getUserId();
 			} else {
 				return null;
 			}

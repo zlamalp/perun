@@ -258,7 +258,7 @@ public class urn_perun_user_attribute_def_virt_eduPersonScopedAffiliations exten
 			resolvingMessages.add(new AttributeChangedForUser(new Attribute(attributeDefinition), ((AttributeSetForUser) message).getUser()));
 
 		} else if (message instanceof AttributeRemovedForUser &&
-				((AttributeRemovedForUser) message).getAttribute().getFriendlyName().equals(getSecondarySourceAttributeFriendlyName())) {
+				((AttributeRemovedForUser) message).getAttributeDefinition().getFriendlyName().equals(getSecondarySourceAttributeFriendlyName())) {
 
 			AttributeDefinition attributeDefinition = perunSession.getPerunBl().getAttributesManagerBl().getAttributeDefinition(perunSession, getDestinationAttributeName());
 			resolvingMessages.add(new AttributeChangedForUser(new Attribute(attributeDefinition), ((AttributeRemovedForUser) message).getUser()));
@@ -297,7 +297,7 @@ public class urn_perun_user_attribute_def_virt_eduPersonScopedAffiliations exten
 
 		} else if (message instanceof AttributeRemovedForGroup &&
 				!VosManager.MEMBERS_GROUP.equals(((AttributeRemovedForGroup) message).getGroup().getName()) &&
-				((AttributeRemovedForGroup) message).getAttribute().getName().equals(getTertiarySourceAttributeName())) {
+				((AttributeRemovedForGroup) message).getAttributeDefinition().getName().equals(getTertiarySourceAttributeName())) {
 
 			AttributeDefinition attributeDefinition = perunSession.getPerunBl().getAttributesManagerBl().getAttributeDefinition(perunSession, getDestinationAttributeName());
 			// TODO - get only active group users, since expired are not affected by current group affiliations

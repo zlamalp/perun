@@ -67,14 +67,14 @@ public class urn_perun_user_attribute_def_virt_additionalIdentifiers extends Use
 		});
 		handleIdentifiers.add(auditEvent -> {
 			if (auditEvent instanceof AttributeSetForUes && ((AttributeSetForUes) auditEvent).getAttribute().getFriendlyName().equals(getSourceAttributeFriendlyName())) {
-				return ((AttributeSetForUes) auditEvent).getUes().getId();
+				return ((AttributeSetForUes) auditEvent).getUserExtSource().getId();
 			} else {
 				return null;
 			}
 		});
 		handleIdentifiers.add(auditEvent -> {
-			if (auditEvent instanceof AttributeRemovedForUes && ((AttributeRemovedForUes) auditEvent).getAttribute().getFriendlyName().equals(getSourceAttributeFriendlyName())) {
-				return ((AttributeRemovedForUes) auditEvent).getUes().getId();
+			if (auditEvent instanceof AttributeRemovedForUes && ((AttributeRemovedForUes) auditEvent).getAttributeDefinition().getFriendlyName().equals(getSourceAttributeFriendlyName())) {
+				return ((AttributeRemovedForUes) auditEvent).getUserExtSource().getId();
 			} else {
 				return null;
 			}

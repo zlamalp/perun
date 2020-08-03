@@ -122,7 +122,7 @@ public class urn_perun_user_attribute_def_virt_institutionsCountries extends Use
 
 			messages.addAll(resolveEvent(sess, ((AttributeSetForKey) message).getKey()));
 		} else if (message instanceof AttributeRemovedForKey
-			&& ((AttributeRemovedForKey) message).getAttribute().getFriendlyName().equals(DNS_STATE_MAPPING_ATTR.getFriendlyName())) {
+			&& ((AttributeRemovedForKey) message).getAttributeDefinition().getFriendlyName().equals(DNS_STATE_MAPPING_ATTR.getFriendlyName())) {
 
 			messages.addAll(resolveEvent(sess, ((AttributeRemovedForKey) message).getKey()));
 		}

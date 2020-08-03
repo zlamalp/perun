@@ -109,7 +109,7 @@ public class urn_perun_user_attribute_def_virt_tcsMails_mu extends UserVirtualAt
 			AttributeDefinition attributeDefinition = perunSession.getPerunBl().getAttributesManagerBl().getAttributeDefinition(perunSession, this.getAttributeDefinition().getName());
 			resolvingMessages.add(new AttributeChangedForUser(new Attribute(attributeDefinition), ((AttributeSetForUser) message).getUser()));
 
-		} else if (message instanceof AttributeRemovedForUser && isAffectedAttribute(((AttributeRemovedForUser) message).getAttribute().getFriendlyName())) {
+		} else if (message instanceof AttributeRemovedForUser && isAffectedAttribute(((AttributeRemovedForUser) message).getAttributeDefinition().getFriendlyName())) {
 			AttributeDefinition attributeDefinition = perunSession.getPerunBl().getAttributesManagerBl().getAttributeDefinition(perunSession, this.getAttributeDefinition().getName());
 			resolvingMessages.add(new AttributeChangedForUser(new Attribute(attributeDefinition), ((AttributeRemovedForUser) message).getUser()));
 
