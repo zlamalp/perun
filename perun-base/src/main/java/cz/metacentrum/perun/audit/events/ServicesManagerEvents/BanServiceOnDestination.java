@@ -1,27 +1,29 @@
-package cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents;
+package cz.metacentrum.perun.audit.events.ServicesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.ServiceEvent;
 import cz.metacentrum.perun.core.api.Service;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class FreeDenialServiceOnDestination extends AuditEvent {
+public class BanServiceOnDestination extends AuditEvent implements ServiceEvent {
 
 	private Service service;
 	private int destinationId;
 	private String message;
 
 	@SuppressWarnings("unused") // used by jackson mapper
-	public FreeDenialServiceOnDestination() {
+	public BanServiceOnDestination() {
 	}
 
-	public FreeDenialServiceOnDestination(Service service, int destinationId) {
+	public BanServiceOnDestination(Service service, int destinationId) {
 		this.service = service;
 		this.destinationId = destinationId;
-		this.message = formatMessage("free denial: %s on %s.", service, destinationId);
+		this.message = formatMessage("ban : %s on %s.", service, destinationId);
 	}
 
+	@Override
 	public Service getService() {
 		return service;
 	}

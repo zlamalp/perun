@@ -1,10 +1,11 @@
 package cz.metacentrum.perun.audit.events.ServicesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.DestinationEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
 import cz.metacentrum.perun.core.api.Destination;
 
-public class DestinationCreated extends AuditEvent implements EngineIgnoreEvent {
+public class DestinationCreated extends AuditEvent implements EngineIgnoreEvent, DestinationEvent {
 
 	private Destination destination;
 	private String message;
@@ -23,6 +24,7 @@ public class DestinationCreated extends AuditEvent implements EngineIgnoreEvent 
 		return message;
 	}
 
+	@Override
 	public Destination getDestination() {
 		return destination;
 	}

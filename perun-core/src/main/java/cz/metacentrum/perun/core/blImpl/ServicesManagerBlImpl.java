@@ -1,15 +1,15 @@
 package cz.metacentrum.perun.core.blImpl;
 
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.BanServiceOnDestination;
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.BanServiceOnFacility;
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.ForcePropagationOnFacilityAndService;
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.ForcePropagationOnService;
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.FreeAllDenialsOnDestination;
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.FreeAllDenialsOnFacility;
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.FreeDenialServiceOnDestination;
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.FreeDenialServiceOnFacility;
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.PropagationPlannedOnFacilityAndService;
-import cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents.PropagationPlannedOnService;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.BanServiceOnDestination;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.BanServiceOnFacility;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.ForcePropagationOnFacilityAndService;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.ForcePropagationOnService;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.FreeAllDenialsOnDestination;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.FreeAllDenialsOnFacility;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.FreeDenialServiceOnDestination;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.FreeDenialServiceOnFacility;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.PropagationPlannedOnFacilityAndService;
+import cz.metacentrum.perun.audit.events.ServicesManagerEvents.PropagationPlannedOnService;
 import cz.metacentrum.perun.audit.events.ServicesManagerEvents.AllRequiredAttributesRemovedFromService;
 import cz.metacentrum.perun.audit.events.ServicesManagerEvents.AttributeAddedAsRequiredToService;
 import cz.metacentrum.perun.audit.events.ServicesManagerEvents.AttributesAddedAsRequiredToService;

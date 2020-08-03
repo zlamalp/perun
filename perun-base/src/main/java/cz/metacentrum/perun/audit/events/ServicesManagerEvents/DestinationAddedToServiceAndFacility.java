@@ -1,11 +1,14 @@
 package cz.metacentrum.perun.audit.events.ServicesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.DestinationEvent;
+import cz.metacentrum.perun.audit.events.FacilityEvent;
+import cz.metacentrum.perun.audit.events.ServiceEvent;
 import cz.metacentrum.perun.core.api.Destination;
 import cz.metacentrum.perun.core.api.Facility;
 import cz.metacentrum.perun.core.api.Service;
 
-public class DestinationAddedToServiceAndFacility extends AuditEvent {
+public class DestinationAddedToServiceAndFacility extends AuditEvent implements FacilityEvent, ServiceEvent, DestinationEvent {
 
 	private Destination destination;
 	private Service service;
@@ -28,14 +31,17 @@ public class DestinationAddedToServiceAndFacility extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Destination getDestination() {
 		return destination;
 	}
 
+	@Override
 	public Service getService() {
 		return service;
 	}
 
+	@Override
 	public Facility getFacility() {
 		return facility;
 	}

@@ -1,13 +1,15 @@
-package cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents;
+package cz.metacentrum.perun.audit.events.ServicesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.FacilityEvent;
+import cz.metacentrum.perun.audit.events.ServiceEvent;
 import cz.metacentrum.perun.core.api.Facility;
 import cz.metacentrum.perun.core.api.Service;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class PropagationPlannedOnFacilityAndService extends AuditEvent {
+public class PropagationPlannedOnFacilityAndService extends AuditEvent implements FacilityEvent, ServiceEvent {
 
 	private Facility facility;
 	private Service service;
@@ -23,10 +25,12 @@ public class PropagationPlannedOnFacilityAndService extends AuditEvent {
 		this.message = formatMessage("propagation planned: On %s and %s.", facility, service);
 	}
 
+	@Override
 	public Facility getFacility() {
 		return facility;
 	}
 
+	@Override
 	public Service getService() {
 		return service;
 	}

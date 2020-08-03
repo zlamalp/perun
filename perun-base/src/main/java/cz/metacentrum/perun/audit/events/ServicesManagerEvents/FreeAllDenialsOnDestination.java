@@ -1,4 +1,4 @@
-package cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents;
+package cz.metacentrum.perun.audit.events.ServicesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 

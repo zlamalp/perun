@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.ServicesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.ServiceEvent;
 import cz.metacentrum.perun.core.api.Service;
 
-public class ServiceCreated extends AuditEvent implements EngineIgnoreEvent {
+public class ServiceCreated extends AuditEvent implements EngineIgnoreEvent, ServiceEvent {
 
 	private Service service;
 	private String message;
@@ -23,6 +24,7 @@ public class ServiceCreated extends AuditEvent implements EngineIgnoreEvent {
 		return message;
 	}
 
+	@Override
 	public Service getService() {
 		return service;
 	}

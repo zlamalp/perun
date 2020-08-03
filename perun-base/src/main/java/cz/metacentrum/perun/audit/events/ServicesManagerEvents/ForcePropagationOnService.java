@@ -1,33 +1,30 @@
-package cz.metacentrum.perun.audit.events.GeneralServiceManagerEvents;
+package cz.metacentrum.perun.audit.events.ServicesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.EngineForceEvent;
+import cz.metacentrum.perun.audit.events.ServiceEvent;
 import cz.metacentrum.perun.core.api.Service;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class BanServiceOnDestination extends AuditEvent {
+public class ForcePropagationOnService extends AuditEvent implements EngineForceEvent, ServiceEvent {
 
 	private Service service;
-	private int destinationId;
 	private String message;
 
 	@SuppressWarnings("unused") // used by jackson mapper
-	public BanServiceOnDestination() {
+	public ForcePropagationOnService() {
 	}
 
-	public BanServiceOnDestination(Service service, int destinationId) {
+	public ForcePropagationOnService(Service service) {
 		this.service = service;
-		this.destinationId = destinationId;
-		this.message = formatMessage("ban : %s on %s.", service, destinationId);
+		this.message = formatMessage("force propagation: On %s.", service);
 	}
 
+	@Override
 	public Service getService() {
 		return service;
-	}
-
-	public int getDestinationId() {
-		return destinationId;
 	}
 
 	@Override

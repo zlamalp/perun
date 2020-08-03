@@ -1,10 +1,12 @@
 package cz.metacentrum.perun.audit.events.ServicesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.ServiceEvent;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 import cz.metacentrum.perun.core.api.Service;
 
-public class AttributeAddedAsRequiredToService extends AuditEvent {
+public class AttributeAddedAsRequiredToService extends AuditEvent implements ServiceEvent, AttributeDefinitionEvent {
 
 	private AttributeDefinition attribute;
 	private Service service;
@@ -25,10 +27,12 @@ public class AttributeAddedAsRequiredToService extends AuditEvent {
 		return message;
 	}
 
-	public AttributeDefinition getAttribute() {
+	@Override
+	public AttributeDefinition getAttributeDefinition() {
 		return attribute;
 	}
 
+	@Override
 	public Service getService() {
 		return service;
 	}
