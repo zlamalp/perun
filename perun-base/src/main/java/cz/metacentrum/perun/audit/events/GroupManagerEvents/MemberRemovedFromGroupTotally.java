@@ -1,10 +1,12 @@
 package cz.metacentrum.perun.audit.events.GroupManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
+import cz.metacentrum.perun.audit.events.MemberEvent;
 import cz.metacentrum.perun.core.api.Group;
 import cz.metacentrum.perun.core.api.Member;
 
-public class MemberRemovedFromGroupTotally extends AuditEvent {
+public class MemberRemovedFromGroupTotally extends AuditEvent implements MemberEvent, GroupEvent {
 
 	private Member member;
 	private Group group;
@@ -25,10 +27,12 @@ public class MemberRemovedFromGroupTotally extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Member getMember() {
 		return member;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}

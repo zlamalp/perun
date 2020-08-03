@@ -2,6 +2,8 @@ package cz.metacentrum.perun.audit.events.ResourceManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
+import cz.metacentrum.perun.audit.events.ResourceEvent;
 import cz.metacentrum.perun.core.api.Group;
 import cz.metacentrum.perun.core.api.Resource;
 
@@ -10,7 +12,7 @@ import cz.metacentrum.perun.core.api.Resource;
  *
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class ResourceSelfServiceAddedForGroup extends AuditEvent implements EngineIgnoreEvent {
+public class ResourceSelfServiceAddedForGroup extends AuditEvent implements EngineIgnoreEvent, GroupEvent, ResourceEvent {
 
 	private Group group;
 	private Resource resource;
@@ -31,10 +33,12 @@ public class ResourceSelfServiceAddedForGroup extends AuditEvent implements Engi
 		return message;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}
 
+	@Override
 	public Resource getResource() {
 		return resource;
 	}

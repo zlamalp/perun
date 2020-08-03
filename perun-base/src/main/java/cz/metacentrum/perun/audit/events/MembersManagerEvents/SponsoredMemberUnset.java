@@ -1,9 +1,10 @@
 package cz.metacentrum.perun.audit.events.MembersManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.MemberEvent;
 import cz.metacentrum.perun.core.api.Member;
 
-public class SponsoredMemberUnset extends AuditEvent {
+public class SponsoredMemberUnset extends AuditEvent implements MemberEvent {
 
 	private Member sponsoredMember;
 	private String message;
@@ -22,7 +23,8 @@ public class SponsoredMemberUnset extends AuditEvent {
 		return message;
 	}
 
-	public Member getSponsoredMember() {
+	@Override
+	public Member getMember() {
 		return sponsoredMember;
 	}
 

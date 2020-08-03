@@ -1,10 +1,12 @@
 package cz.metacentrum.perun.audit.events.ResourceManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
+import cz.metacentrum.perun.audit.events.ResourceEvent;
 import cz.metacentrum.perun.core.api.Group;
 import cz.metacentrum.perun.core.api.Resource;
 
-public class GroupAssignedToResource extends AuditEvent {
+public class GroupAssignedToResource extends AuditEvent implements GroupEvent, ResourceEvent {
 
 	private Group group;
 	private Resource resource;
@@ -25,10 +27,12 @@ public class GroupAssignedToResource extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}
 
+	@Override
 	public Resource getResource() {
 		return resource;
 	}

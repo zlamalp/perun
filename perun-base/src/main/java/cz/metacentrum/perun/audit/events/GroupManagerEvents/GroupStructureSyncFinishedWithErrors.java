@@ -1,9 +1,11 @@
 package cz.metacentrum.perun.audit.events.GroupManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
 import cz.metacentrum.perun.core.api.Group;
 
-public class GroupStructureSyncFinishedWithErrors extends AuditEvent {
+public class GroupStructureSyncFinishedWithErrors extends AuditEvent implements EngineIgnoreEvent, GroupEvent {
 
 	private Group group;
 	private String message;
@@ -22,6 +24,7 @@ public class GroupStructureSyncFinishedWithErrors extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}

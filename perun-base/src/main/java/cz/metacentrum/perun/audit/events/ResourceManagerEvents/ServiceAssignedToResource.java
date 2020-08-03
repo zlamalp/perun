@@ -1,10 +1,12 @@
 package cz.metacentrum.perun.audit.events.ResourceManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.ResourceEvent;
+import cz.metacentrum.perun.audit.events.ServiceEvent;
 import cz.metacentrum.perun.core.api.Resource;
 import cz.metacentrum.perun.core.api.Service;
 
-public class ServiceAssignedToResource extends AuditEvent {
+public class ServiceAssignedToResource extends AuditEvent implements ServiceEvent, ResourceEvent {
 
 	private Service service;
 	private Resource resource;
@@ -25,10 +27,12 @@ public class ServiceAssignedToResource extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Service getService() {
 		return service;
 	}
 
+	@Override
 	public Resource getResource() {
 		return resource;
 	}

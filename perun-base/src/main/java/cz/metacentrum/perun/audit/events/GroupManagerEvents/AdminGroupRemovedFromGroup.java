@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.GroupManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
 import cz.metacentrum.perun.core.api.Group;
 
-public class AdminGroupRemovedFromGroup extends AuditEvent implements EngineIgnoreEvent {
+public class AdminGroupRemovedFromGroup extends AuditEvent implements EngineIgnoreEvent, GroupEvent {
 
 	private Group group;
 	private Group authorizedGroup;
@@ -25,6 +26,7 @@ public class AdminGroupRemovedFromGroup extends AuditEvent implements EngineIgno
 		return message;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}

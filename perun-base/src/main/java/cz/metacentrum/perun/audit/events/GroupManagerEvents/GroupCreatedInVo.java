@@ -1,10 +1,12 @@
 package cz.metacentrum.perun.audit.events.GroupManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
+import cz.metacentrum.perun.audit.events.VoEvent;
 import cz.metacentrum.perun.core.api.Group;
 import cz.metacentrum.perun.core.api.Vo;
 
-public class GroupCreatedInVo extends AuditEvent {
+public class GroupCreatedInVo extends AuditEvent implements GroupEvent, VoEvent {
 
 	private Group group;
 	private Vo vo;
@@ -25,10 +27,12 @@ public class GroupCreatedInVo extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}
 
+	@Override
 	public Vo getVo() {
 		return vo;
 	}

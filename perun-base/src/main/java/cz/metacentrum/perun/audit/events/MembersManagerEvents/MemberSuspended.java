@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.MembersManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineForceEvent;
+import cz.metacentrum.perun.audit.events.MemberEvent;
 import cz.metacentrum.perun.core.api.Member;
 
-public class MemberSuspended extends AuditEvent implements EngineForceEvent {
+public class MemberSuspended extends AuditEvent implements EngineForceEvent, MemberEvent {
 
 	private Member member;
 	private String engineForceKeyword;
@@ -25,6 +26,7 @@ public class MemberSuspended extends AuditEvent implements EngineForceEvent {
 		return message;
 	}
 
+	@Override
 	public Member getMember() {
 		return member;
 	}

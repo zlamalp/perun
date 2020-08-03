@@ -1,9 +1,10 @@
 package cz.metacentrum.perun.audit.events.MembersManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.MemberEvent;
 import cz.metacentrum.perun.core.api.Member;
 
-public class MemberValidated extends AuditEvent {
+public class MemberValidated extends AuditEvent implements MemberEvent {
 
 	private Member member;
 	private String message;
@@ -22,6 +23,7 @@ public class MemberValidated extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Member getMember() {
 		return member;
 	}

@@ -1,9 +1,10 @@
 package cz.metacentrum.perun.audit.events.GroupManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
 import cz.metacentrum.perun.core.api.Group;
 
-public class GroupDeleted extends AuditEvent {
+public class GroupDeleted extends AuditEvent implements GroupEvent {
 
 	private Group group;
 	private String message;
@@ -22,6 +23,7 @@ public class GroupDeleted extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}

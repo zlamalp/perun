@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.ResourceManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.ResourceEvent;
 import cz.metacentrum.perun.core.api.Resource;
 
-public class ResourceCreated extends AuditEvent implements EngineIgnoreEvent {
+public class ResourceCreated extends AuditEvent implements EngineIgnoreEvent, ResourceEvent {
 
 	private Resource resource;
 	private String message;
@@ -23,6 +24,7 @@ public class ResourceCreated extends AuditEvent implements EngineIgnoreEvent {
 		return message;
 	}
 
+	@Override
 	public Resource getResource() {
 		return resource;
 	}

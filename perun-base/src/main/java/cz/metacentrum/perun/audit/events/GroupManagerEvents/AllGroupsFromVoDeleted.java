@@ -1,9 +1,10 @@
 package cz.metacentrum.perun.audit.events.GroupManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.VoEvent;
 import cz.metacentrum.perun.core.api.Vo;
 
-public class AllGroupsFromVoDeleted extends AuditEvent {
+public class AllGroupsFromVoDeleted extends AuditEvent implements VoEvent {
 
 	private Vo vo;
 	private String message;
@@ -22,6 +23,7 @@ public class AllGroupsFromVoDeleted extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Vo getVo() {
 		return vo;
 	}

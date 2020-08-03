@@ -1,9 +1,10 @@
 package cz.metacentrum.perun.audit.events.ResourceManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.ResourceEvent;
 import cz.metacentrum.perun.core.api.Resource;
 
-public class ResourceUpdated extends AuditEvent {
+public class ResourceUpdated extends AuditEvent implements ResourceEvent {
 
 	private Resource resource;
 	private String message;
@@ -22,6 +23,7 @@ public class ResourceUpdated extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public Resource getResource() {
 		return resource;
 	}
