@@ -1,11 +1,14 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.MemberEvent;
+import cz.metacentrum.perun.audit.events.ResourceEvent;
 import cz.metacentrum.perun.core.api.Attribute;
 import cz.metacentrum.perun.core.api.Member;
 import cz.metacentrum.perun.core.api.Resource;
 
-public class AttributeChangedForResourceAndMember extends AuditEvent {
+public class AttributeChangedForResourceAndMember extends AuditEvent implements ResourceEvent, MemberEvent, AttributeEvent {
 
 	private Attribute attribute;
 	private Resource resource;
@@ -23,14 +26,17 @@ public class AttributeChangedForResourceAndMember extends AuditEvent {
 		this.message = formatMessage("%s changed for %s and %s.", attribute, resource, member);
 	}
 
+	@Override
 	public Attribute getAttribute() {
 		return attribute;
 	}
 
+	@Override
 	public Resource getResource() {
 		return resource;
 	}
 
+	@Override
 	public Member getMember() {
 		return member;
 	}

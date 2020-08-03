@@ -1,13 +1,15 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.HostEvent;
 import cz.metacentrum.perun.core.api.Attribute;
 import cz.metacentrum.perun.core.api.Host;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class AttributeSetForHost extends AuditEvent {
+public class AttributeSetForHost extends AuditEvent implements HostEvent, AttributeEvent {
 
 	private Attribute attribute;
 	private Host host;
@@ -23,10 +25,12 @@ public class AttributeSetForHost extends AuditEvent {
 		this.message = formatMessage("%s set for %s.", attribute, host);
 	}
 
+	@Override
 	public Attribute getAttribute() {
 		return attribute;
 	}
 
+	@Override
 	public Host getHost() {
 		return host;
 	}

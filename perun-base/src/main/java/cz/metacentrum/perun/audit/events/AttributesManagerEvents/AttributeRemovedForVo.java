@@ -1,13 +1,15 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.VoEvent;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 import cz.metacentrum.perun.core.api.Vo;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class AttributeRemovedForVo extends AuditEvent {
+public class AttributeRemovedForVo extends AuditEvent implements VoEvent, AttributeDefinitionEvent {
 
 	private AttributeDefinition attribute;
 	private Vo vo;
@@ -23,10 +25,12 @@ public class AttributeRemovedForVo extends AuditEvent {
 		this.message = formatMessage("%s removed for %s.", attribute, vo);
 	}
 
-	public AttributeDefinition getAttribute() {
+	@Override
+	public AttributeDefinition getAttributeDefinition() {
 		return attribute;
 	}
 
+	@Override
 	public Vo getVo() {
 		return vo;
 	}

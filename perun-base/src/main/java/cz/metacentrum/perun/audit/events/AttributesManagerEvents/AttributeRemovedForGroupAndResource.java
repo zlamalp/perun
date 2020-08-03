@@ -1,6 +1,9 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
+import cz.metacentrum.perun.audit.events.ResourceEvent;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 import cz.metacentrum.perun.core.api.Group;
 import cz.metacentrum.perun.core.api.Resource;
@@ -8,7 +11,7 @@ import cz.metacentrum.perun.core.api.Resource;
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class AttributeRemovedForGroupAndResource extends AuditEvent {
+public class AttributeRemovedForGroupAndResource extends AuditEvent implements GroupEvent, ResourceEvent, AttributeDefinitionEvent {
 
 	private AttributeDefinition attribute;
 	private Group group;
@@ -26,14 +29,17 @@ public class AttributeRemovedForGroupAndResource extends AuditEvent {
 		this.message = formatMessage("%s removed for %s and %s.", attribute, group, resource);
 	}
 
-	public AttributeDefinition getAttribute() {
+	@Override
+	public AttributeDefinition getAttributeDefinition() {
 		return attribute;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}
 
+	@Override
 	public Resource getResource() {
 		return resource;
 	}

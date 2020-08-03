@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.VoEvent;
 import cz.metacentrum.perun.core.api.Vo;
 
-public class AllAttributesRemovedForVo extends AuditEvent implements EngineIgnoreEvent {
+public class AllAttributesRemovedForVo extends AuditEvent implements EngineIgnoreEvent, VoEvent {
 
 	private Vo vo;
 	private String message;
@@ -18,6 +19,7 @@ public class AllAttributesRemovedForVo extends AuditEvent implements EngineIgnor
 		this.message = formatMessage("All attributes removed for %s.", vo);
 	}
 
+	@Override
 	public Vo getVo() {
 		return vo;
 	}

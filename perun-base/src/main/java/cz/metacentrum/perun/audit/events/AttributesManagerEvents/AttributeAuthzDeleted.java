@@ -1,10 +1,11 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 
-public class AttributeAuthzDeleted extends AuditEvent implements EngineIgnoreEvent {
+public class AttributeAuthzDeleted extends AuditEvent implements EngineIgnoreEvent, AttributeDefinitionEvent {
 
 	private AttributeDefinition attributeDefinition;
 	private String message;
@@ -18,6 +19,7 @@ public class AttributeAuthzDeleted extends AuditEvent implements EngineIgnoreEve
 		this.message = formatMessage("All authorization information were deleted for %s.", attributeDefinition);
 	}
 
+	@Override
 	public AttributeDefinition getAttributeDefinition() {
 		return attributeDefinition;
 	}

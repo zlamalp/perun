@@ -1,13 +1,13 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
-import cz.metacentrum.perun.core.api.Attribute;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 
-public class AttributeCreated extends AuditEvent implements EngineIgnoreEvent {
+public class AttributeCreated extends AuditEvent implements EngineIgnoreEvent, AttributeDefinitionEvent {
 
-	private AttributeDefinition attribute;
+	private AttributeDefinition attributeDefinition;
 	private String message;
 
 	@SuppressWarnings("unused") // used by jackson mapper
@@ -15,12 +15,13 @@ public class AttributeCreated extends AuditEvent implements EngineIgnoreEvent {
 	}
 
 	public AttributeCreated(AttributeDefinition attribute) {
-		this.attribute = attribute;
-		this.message = formatMessage("%s created.", attribute);
+		this.attributeDefinition = attribute;
+		this.message = formatMessage("%s created.", attributeDefinition);
 	}
 
-	public AttributeDefinition getAttribute() {
-		return attribute;
+	@Override
+	public AttributeDefinition getAttributeDefinition() {
+		return attributeDefinition;
 	}
 
 	@Override

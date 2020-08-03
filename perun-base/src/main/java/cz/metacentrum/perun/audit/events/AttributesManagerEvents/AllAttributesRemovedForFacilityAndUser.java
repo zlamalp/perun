@@ -2,10 +2,12 @@ package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.FacilityEvent;
+import cz.metacentrum.perun.audit.events.UserEvent;
 import cz.metacentrum.perun.core.api.Facility;
 import cz.metacentrum.perun.core.api.User;
 
-public class AllAttributesRemovedForFacilityAndUser extends AuditEvent implements EngineIgnoreEvent {
+public class AllAttributesRemovedForFacilityAndUser extends AuditEvent implements EngineIgnoreEvent, UserEvent, FacilityEvent {
 
 	private Facility facility;
 	private User user;
@@ -21,10 +23,12 @@ public class AllAttributesRemovedForFacilityAndUser extends AuditEvent implement
 		this.message = formatMessage("All attributes removed for %s and %s.", facility, user);
 	}
 
+	@Override
 	public Facility getFacility() {
 		return facility;
 	}
 
+	@Override
 	public User getUser() {
 		return user;
 	}

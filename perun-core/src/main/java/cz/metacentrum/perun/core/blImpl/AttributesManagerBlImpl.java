@@ -46,7 +46,7 @@ import cz.metacentrum.perun.audit.events.AttributesManagerEvents.AttributeSetFor
 import cz.metacentrum.perun.audit.events.AttributesManagerEvents.AttributeSetForUser;
 import cz.metacentrum.perun.audit.events.AttributesManagerEvents.AttributeSetForVo;
 import cz.metacentrum.perun.audit.events.AttributesManagerEvents.AttributeUpdated;
-import cz.metacentrum.perun.audit.events.AttributesManagerEvents.FacilityAllAttributesRemoved;
+import cz.metacentrum.perun.audit.events.AttributesManagerEvents.AllAttributesRemovedForFacility;
 import cz.metacentrum.perun.core.api.ActionType;
 import cz.metacentrum.perun.core.api.Attribute;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
@@ -4329,7 +4329,7 @@ public class AttributesManagerBlImpl implements AttributesManagerBl {
 	public void removeAllAttributes(PerunSession sess, Facility facility) throws WrongAttributeValueException, WrongReferenceAttributeValueException {
 		List<Attribute> attributes = getAttributes(sess, facility);
 		if (getAttributesManagerImpl().removeAllAttributes(sess, facility)) {
-			getPerunBl().getAuditer().log(sess,new FacilityAllAttributesRemoved(facility));
+			getPerunBl().getAuditer().log(sess,new AllAttributesRemovedForFacility(facility));
 		}
 		log.info("{} removed all attributes from facility {}.", sess.getLogId(), facility.getId());
 

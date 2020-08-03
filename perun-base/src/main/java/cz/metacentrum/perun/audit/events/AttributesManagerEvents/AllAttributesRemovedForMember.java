@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.MemberEvent;
 import cz.metacentrum.perun.core.api.Member;
 
-public class AllAttributesRemovedForMember extends AuditEvent implements EngineIgnoreEvent {
+public class AllAttributesRemovedForMember extends AuditEvent implements EngineIgnoreEvent, MemberEvent {
 
 	private Member member;
 	private String message;
@@ -18,6 +19,7 @@ public class AllAttributesRemovedForMember extends AuditEvent implements EngineI
 		this.message = formatMessage("All attributes removed for %s.", member);
 	}
 
+	@Override
 	public Member getMember() {
 		return member;
 	}

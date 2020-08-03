@@ -1,13 +1,15 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.HostEvent;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 import cz.metacentrum.perun.core.api.Host;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class AttributeRemovedForHost extends AuditEvent {
+public class AttributeRemovedForHost extends AuditEvent implements HostEvent, AttributeDefinitionEvent {
 
 	private AttributeDefinition attribute;
 	private Host host;
@@ -23,10 +25,12 @@ public class AttributeRemovedForHost extends AuditEvent {
 		this.message = formatMessage("%s removed for %s.", attribute, host);
 	}
 
-	public AttributeDefinition getAttribute() {
+	@Override
+	public AttributeDefinition getAttributeDefinition() {
 		return attribute;
 	}
 
+	@Override
 	public Host getHost() {
 		return host;
 	}

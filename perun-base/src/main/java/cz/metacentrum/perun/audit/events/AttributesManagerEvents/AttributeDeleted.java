@@ -1,9 +1,10 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 
-public class AttributeDeleted extends AuditEvent {
+public class AttributeDeleted extends AuditEvent implements AttributeDefinitionEvent {
 
 	private AttributeDefinition attributeDefinition;
 	private String message;
@@ -17,6 +18,7 @@ public class AttributeDeleted extends AuditEvent {
 		this.message = formatMessage("%s deleted.", attributeDefinition);
 	}
 
+	@Override
 	public AttributeDefinition getAttributeDefinition() {
 		return attributeDefinition;
 	}

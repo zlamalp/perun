@@ -1,13 +1,15 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 import cz.metacentrum.perun.core.api.Group;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class AttributeRemovedForGroup extends AuditEvent {
+public class AttributeRemovedForGroup extends AuditEvent implements AttributeDefinitionEvent, GroupEvent {
 
 	private AttributeDefinition attribute;
 	private Group group;
@@ -23,10 +25,12 @@ public class AttributeRemovedForGroup extends AuditEvent {
 		this.message = formatMessage("%s removed for %s.", attribute, group);
 	}
 
-	public AttributeDefinition getAttribute() {
+	@Override
+	public AttributeDefinition getAttributeDefinition() {
 		return attribute;
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}

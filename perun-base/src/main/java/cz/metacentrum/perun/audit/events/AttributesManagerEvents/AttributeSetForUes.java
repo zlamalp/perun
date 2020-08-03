@@ -1,13 +1,15 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.UserExtSourceEvent;
 import cz.metacentrum.perun.core.api.Attribute;
 import cz.metacentrum.perun.core.api.UserExtSource;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class AttributeSetForUes extends AuditEvent {
+public class AttributeSetForUes extends AuditEvent implements AttributeEvent, UserExtSourceEvent {
 
 	private Attribute attribute;
 	private UserExtSource ues;
@@ -23,11 +25,13 @@ public class AttributeSetForUes extends AuditEvent {
 		this.message = formatMessage("%s set for %s.", attribute, ues);
 	}
 
+	@Override
 	public Attribute getAttribute() {
 		return attribute;
 	}
 
-	public UserExtSource getUes() {
+	@Override
+	public UserExtSource getUserExtSource() {
 		return ues;
 	}
 

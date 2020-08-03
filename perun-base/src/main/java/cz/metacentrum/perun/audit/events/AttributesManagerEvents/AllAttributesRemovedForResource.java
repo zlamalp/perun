@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.ResourceEvent;
 import cz.metacentrum.perun.core.api.Resource;
 
-public class AllAttributesRemovedForResource extends AuditEvent implements EngineIgnoreEvent {
+public class AllAttributesRemovedForResource extends AuditEvent implements EngineIgnoreEvent, ResourceEvent {
 
 	private Resource resource;
 	private String message;
@@ -18,6 +19,7 @@ public class AllAttributesRemovedForResource extends AuditEvent implements Engin
 		this.message = formatMessage("All attributes removed for %s.", resource);
 	}
 
+	@Override
 	public Resource getResource() {
 		return resource;
 	}

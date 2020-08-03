@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.HostEvent;
 import cz.metacentrum.perun.core.api.Host;
 
-public class AllAttributesRemovedForHost extends AuditEvent implements EngineIgnoreEvent {
+public class AllAttributesRemovedForHost extends AuditEvent implements EngineIgnoreEvent, HostEvent {
 
 	private Host host;
 	private String message;
@@ -18,6 +19,7 @@ public class AllAttributesRemovedForHost extends AuditEvent implements EngineIgn
 		this.message = formatMessage("All attributes removed for %s.", host);
 	}
 
+	@Override
 	public Host getHost() {
 		return host;
 	}

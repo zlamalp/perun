@@ -1,12 +1,13 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class AttributeRemovedForKey extends AuditEvent {
+public class AttributeRemovedForKey extends AuditEvent implements AttributeDefinitionEvent {
 
 	private AttributeDefinition attribute;
 	private String key;
@@ -22,7 +23,8 @@ public class AttributeRemovedForKey extends AuditEvent {
 		this.message = formatMessage("%s removed for %s.", attribute, key);
 	}
 
-	public AttributeDefinition getAttribute() {
+	@Override
+	public AttributeDefinition getAttributeDefinition() {
 		return attribute;
 	}
 

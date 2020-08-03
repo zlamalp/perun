@@ -2,22 +2,24 @@ package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.FacilityEvent;
 import cz.metacentrum.perun.core.api.Facility;
 
-public class FacilityAllAttributesRemoved extends AuditEvent implements EngineIgnoreEvent {
+public class AllAttributesRemovedForFacility extends AuditEvent implements EngineIgnoreEvent, FacilityEvent {
 
 	private Facility facility;
 	private String message;
 
 	@SuppressWarnings("unused") // used by jackson mapper
-	public FacilityAllAttributesRemoved() {
+	public AllAttributesRemovedForFacility() {
 	}
 
-	public FacilityAllAttributesRemoved(Facility facility) {
+	public AllAttributesRemovedForFacility(Facility facility) {
 		this.facility = facility;
 		this.message = formatMessage("All attributes removed for %s.", facility);
 	}
 
+	@Override
 	public Facility getFacility() {
 		return facility;
 	}

@@ -1,11 +1,12 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.UserEvent;
 import cz.metacentrum.perun.core.api.Attribute;
-import cz.metacentrum.perun.core.api.AttributeDefinition;
 import cz.metacentrum.perun.core.api.User;
 
-public class AttributeChangedForUser extends AuditEvent {
+public class AttributeChangedForUser extends AuditEvent implements AttributeEvent, UserEvent {
 
 	private Attribute attribute;
 	private User user;
@@ -21,10 +22,12 @@ public class AttributeChangedForUser extends AuditEvent {
 		this.message = formatMessage("%s changed for %s.", attribute, user);
 	}
 
-	public AttributeDefinition getAttribute() {
+	@Override
+	public Attribute getAttribute() {
 		return attribute;
 	}
 
+	@Override
 	public User getUser() {
 		return user;
 	}

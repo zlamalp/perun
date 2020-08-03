@@ -2,10 +2,12 @@ package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
 import cz.metacentrum.perun.core.api.Group;
 
+import java.util.List;
 
-public class AllAttributesRemovedForGroup extends AuditEvent implements EngineIgnoreEvent {
+public class AllAttributesRemovedForGroup extends AuditEvent implements EngineIgnoreEvent, GroupEvent {
 
 	private Group group;
 	private String message;
@@ -19,6 +21,7 @@ public class AllAttributesRemovedForGroup extends AuditEvent implements EngineIg
 		this.message = formatMessage("All attributes removed for %s.", group);
 	}
 
+	@Override
 	public Group getGroup() {
 		return group;
 	}

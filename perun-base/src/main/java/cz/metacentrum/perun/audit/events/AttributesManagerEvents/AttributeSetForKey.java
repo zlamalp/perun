@@ -1,12 +1,13 @@
 package cz.metacentrum.perun.audit.events.AttributesManagerEvents;
 
+import cz.metacentrum.perun.audit.events.AttributeEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.core.api.Attribute;
 
 /**
  * @author Vojtech Sassmann <vojtech.sassmann@gmail.com>
  */
-public class AttributeSetForKey extends AuditEvent {
+public class AttributeSetForKey extends AuditEvent implements AttributeEvent {
 
 	private Attribute attribute;
 	private String key;
@@ -22,6 +23,7 @@ public class AttributeSetForKey extends AuditEvent {
 		this.message = formatMessage("%s set for %s.", attribute, key);
 	}
 
+	@Override
 	public Attribute getAttribute() {
 		return attribute;
 	}
