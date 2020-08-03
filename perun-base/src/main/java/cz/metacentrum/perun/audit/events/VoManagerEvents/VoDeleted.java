@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.VoManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.VoEvent;
 import cz.metacentrum.perun.core.api.Vo;
 
-public class VoDeleted extends AuditEvent implements EngineIgnoreEvent {
+public class VoDeleted extends AuditEvent implements EngineIgnoreEvent, VoEvent {
 
 	private Vo vo;
 	private String message;
@@ -23,6 +24,7 @@ public class VoDeleted extends AuditEvent implements EngineIgnoreEvent {
 		return message;
 	}
 
+	@Override
 	public Vo getVo() {
 		return vo;
 	}

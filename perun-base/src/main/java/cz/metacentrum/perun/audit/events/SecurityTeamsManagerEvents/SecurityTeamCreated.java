@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.SecurityTeamsManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.SecurityTeamEvent;
 import cz.metacentrum.perun.core.api.SecurityTeam;
 
-public class SecurityTeamCreated extends AuditEvent implements EngineIgnoreEvent {
+public class SecurityTeamCreated extends AuditEvent implements EngineIgnoreEvent, SecurityTeamEvent {
 
 	private SecurityTeam securityTeam;
 	private String message;
@@ -23,6 +24,7 @@ public class SecurityTeamCreated extends AuditEvent implements EngineIgnoreEvent
 		return message;
 	}
 
+	@Override
 	public SecurityTeam getSecurityTeam() {
 		return securityTeam;
 	}

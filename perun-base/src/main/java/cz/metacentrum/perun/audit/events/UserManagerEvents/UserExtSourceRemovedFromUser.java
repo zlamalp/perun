@@ -1,10 +1,12 @@
 package cz.metacentrum.perun.audit.events.UserManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.UserEvent;
+import cz.metacentrum.perun.audit.events.UserExtSourceEvent;
 import cz.metacentrum.perun.core.api.User;
 import cz.metacentrum.perun.core.api.UserExtSource;
 
-public class UserExtSourceRemovedFromUser extends AuditEvent {
+public class UserExtSourceRemovedFromUser extends AuditEvent implements UserEvent, UserExtSourceEvent {
 
 	private User user;
 	private UserExtSource userExtSource;
@@ -25,10 +27,12 @@ public class UserExtSourceRemovedFromUser extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public User getUser() {
 		return user;
 	}
 
+	@Override
 	public UserExtSource getUserExtSource() {
 		return userExtSource;
 	}

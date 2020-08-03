@@ -1,9 +1,10 @@
 package cz.metacentrum.perun.audit.events.UserManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
+import cz.metacentrum.perun.audit.events.UserEvent;
 import cz.metacentrum.perun.core.api.User;
 
-public class UserDeleted extends AuditEvent {
+public class UserDeleted extends AuditEvent implements UserEvent {
 
 	private User user;
 	private String message;
@@ -22,6 +23,7 @@ public class UserDeleted extends AuditEvent {
 		return message;
 	}
 
+	@Override
 	public User getUser() {
 		return user;
 	}

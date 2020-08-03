@@ -2,9 +2,10 @@ package cz.metacentrum.perun.audit.events.UserManagerEvents;
 
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.UserEvent;
 import cz.metacentrum.perun.core.api.User;
 
-public class AllUserExtSourcesDeletedForUser extends AuditEvent implements EngineIgnoreEvent {
+public class AllUserExtSourcesDeletedForUser extends AuditEvent implements EngineIgnoreEvent, UserEvent {
 
 	private User user;
 	private String message;
@@ -23,6 +24,7 @@ public class AllUserExtSourcesDeletedForUser extends AuditEvent implements Engin
 		return message;
 	}
 
+	@Override
 	public User getUser() {
 		return user;
 	}
