@@ -7,37 +7,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import cz.metacentrum.perun.audit.events.AttributeDefinitionEvent;
+import cz.metacentrum.perun.audit.events.AttributeEvent;
 import cz.metacentrum.perun.audit.events.AuditEvent;
 import cz.metacentrum.perun.audit.events.EngineIgnoreEvent;
+import cz.metacentrum.perun.audit.events.FacilityEvent;
+import cz.metacentrum.perun.audit.events.GroupEvent;
+import cz.metacentrum.perun.audit.events.HostEvent;
+import cz.metacentrum.perun.audit.events.MemberEvent;
+import cz.metacentrum.perun.audit.events.ResourceEvent;
+import cz.metacentrum.perun.audit.events.ServiceEvent;
+import cz.metacentrum.perun.audit.events.ServicesEvent;
+import cz.metacentrum.perun.audit.events.UserEvent;
 import cz.metacentrum.perun.core.api.PerunClient;
 
+import cz.metacentrum.perun.core.bl.PerunBl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import cz.metacentrum.perun.auditparser.AuditParser;
 import cz.metacentrum.perun.core.api.AttributeDefinition;
 import cz.metacentrum.perun.core.api.Facility;
 import cz.metacentrum.perun.core.api.Group;
 import cz.metacentrum.perun.core.api.Host;
 import cz.metacentrum.perun.core.api.Member;
-import cz.metacentrum.perun.core.api.Perun;
-import cz.metacentrum.perun.core.api.PerunBean;
 import cz.metacentrum.perun.core.api.PerunPrincipal;
 import cz.metacentrum.perun.core.api.PerunSession;
 import cz.metacentrum.perun.core.api.Resource;
 import cz.metacentrum.perun.core.api.Service;
 import cz.metacentrum.perun.core.api.User;
-import cz.metacentrum.perun.core.api.exceptions.FacilityNotExistsException;
-import cz.metacentrum.perun.core.api.exceptions.GroupNotExistsException;
-import cz.metacentrum.perun.core.api.exceptions.HostNotExistsException;
-import cz.metacentrum.perun.core.api.exceptions.InternalErrorException;
-import cz.metacentrum.perun.core.api.exceptions.MemberNotExistsException;
 import cz.metacentrum.perun.core.api.exceptions.PrivilegeException;
-import cz.metacentrum.perun.core.api.exceptions.ResourceNotExistsException;
 import cz.metacentrum.perun.core.api.exceptions.ServiceNotExistsException;
-import cz.metacentrum.perun.core.api.exceptions.UserNotExistsException;
-import cz.metacentrum.perun.dispatcher.exceptions.InvalidEventMessageException;
 import cz.metacentrum.perun.dispatcher.processing.EventServiceResolver;
 
 /**
@@ -56,7 +57,7 @@ public class EventServiceResolverImpl implements EventServiceResolver {
 	private static final Logger log = LoggerFactory.getLogger(EventServiceResolverImpl.class);
 
 	private Properties dispatcherProperties;
-	private Perun perun;
+	private PerunBl perunBl;
 
 	private PerunSession perunSession = null;
 
@@ -71,19 +72,19 @@ public class EventServiceResolverImpl implements EventServiceResolver {
 		this.dispatcherProperties = dispatcherProperties;
 	}
 
-	public Perun getPerun() {
-		return perun;
+	public PerunBl getPerun() {
+		return perunBl;
 	}
 
 	@Autowired
-	public void setPerun(Perun perun) {
-		this.perun = perun;
+	public void setPerun(PerunBl perun) {
+		this.perunBl = perun;
 	}
 
 	// ----- methods -------------------------------------
 
 	@Override
-	public Map<Facility, Set<Service>> resolveEvent(AuditEvent event) throws InvalidEventMessageException, ServiceNotExistsException, PrivilegeException {
+	public Map<Facility, Set<Service>> resolveEvent(AuditEvent event) throws ServiceNotExistsException, PrivilegeException {
 
 		log.info("Event - I am going to process event: {}", event);
 
@@ -93,10 +94,6 @@ public class EventServiceResolverImpl implements EventServiceResolver {
 			log.info("Event ignored {} facilities will be returned", result.size());
 			return result;
 		}
-
-		// GET All Beans (only PerunBeans) from message
-		List<PerunBean> listOfBeans = new ArrayList<PerunBean>();
-		listOfBeans = AuditParser.parseLog(event.getMessage());
 
 		// Prepare variables
 		AttributeDefinition attributeDefinition = null;
@@ -108,41 +105,44 @@ public class EventServiceResolverImpl implements EventServiceResolver {
 		Service service = null;
 		Host host = null;
 
-		// Recognize every object in List of PerunBeans from eventData
-		// TODO: What about more than 1 resources, or more than 1 facilities etc. ?
-		for (PerunBean pb : listOfBeans) {
-			if (pb instanceof AttributeDefinition) {
-				attributeDefinition = (AttributeDefinition) pb;
-			} else if (pb instanceof Facility) {
-				facility = (Facility) pb;
-			} else if (pb instanceof Resource) {
-				resource = (Resource) pb;
-			} else if (pb instanceof Group) {
-				group = (Group) pb;
-			} else if (pb instanceof User) {
-				user = (User) pb;
-			} else if (pb instanceof Member) {
-				member = (Member) pb;
-			} else if (pb instanceof Service) {
-				service = (Service) pb;
-			} else if (pb instanceof Host) {
-				host = (Host) pb;
-			}
+		// fill variables if possible
+		if (event instanceof AttributeDefinitionEvent) {
+			attributeDefinition = ((AttributeDefinitionEvent) event).getAttributeDefinition();
+		}
+		if (event instanceof AttributeEvent) {
+			attributeDefinition = ((AttributeEvent) event).getAttribute();
+		}
+		if (event instanceof FacilityEvent) {
+			facility = ((FacilityEvent) event).getFacility();
+		}
+		if (event instanceof ResourceEvent) {
+			resource = ((ResourceEvent) event).getResource();
+		}
+		if (event instanceof GroupEvent) {
+			group = ((GroupEvent) event).getGroup();
+		}
+		if (event instanceof UserEvent) {
+			user = ((UserEvent) event).getUser();
+		}
+		if (event instanceof MemberEvent) {
+			member = ((MemberEvent) event).getMember();
+		}
+		if (event instanceof ServiceEvent) {
+			service = ((ServiceEvent) event).getService();
+		}
+		if (event instanceof HostEvent) {
+			host = ((HostEvent) event).getHost();
 		}
 
-		// If there is any attribute, so create AttributeDefinition
-		if (attributeDefinition != null) {
-			log.debug("Attribute found in event. {}.", attributeDefinition);
-		}
+		System.out.println("---------");
 
-		List<Facility> facilitiesResolvedFromEvent = new ArrayList<Facility>();
 		List<Resource> resourcesResolvedFromEvent = new ArrayList<Resource>();
 		List<Service> servicesResolvedFromEvent = new ArrayList<Service>();
 
 		// =============== Resolve facilities from event======================
 
 		if (perunSession == null) {
-			perunSession = perun.getPerunSession(new PerunPrincipal(
+			perunSession = perunBl.getPerunSession(new PerunPrincipal(
 							dispatcherProperties.getProperty("perun.principal.name"),
 							dispatcherProperties.getProperty("perun.principal.extSourceName"),
 							dispatcherProperties.getProperty("perun.principal.extSourceType")),
@@ -151,14 +151,8 @@ public class EventServiceResolverImpl implements EventServiceResolver {
 
 		// Try to find FACILITY in event
 		if (facility != null) {
-			try {
-				log.debug("Facility found in event. {}.", facility);
-				facilitiesResolvedFromEvent.add(facility);
-				resourcesResolvedFromEvent.addAll(perun.getFacilitiesManager()
-						.getAssignedResources(perunSession, facility));
-			} catch (FacilityNotExistsException ex) {
-				log.warn("Non-existing facility found while resolving event. id={}", facility.getId());
-			}
+			log.debug("Facility found in event. {}.", facility);
+			resourcesResolvedFromEvent.addAll(perunBl.getFacilitiesManagerBl().getAssignedResources(perunSession, facility));
 		} else {
 			// Try to find RESOURCE in event
 			if (resource != null) {
@@ -166,46 +160,21 @@ public class EventServiceResolverImpl implements EventServiceResolver {
 			} else {
 				// Try to find GROUP in event
 				if (group != null) {
-					try {
-						resourcesResolvedFromEvent = perun.getResourcesManager()
-								.getAssignedResources(perunSession, group);
-					} catch (GroupNotExistsException ex) {
-						log.warn("Non-existing group found while resolving event. id={}", group.getId());
-					}
+					resourcesResolvedFromEvent = perunBl.getResourcesManagerBl().getAssignedResources(perunSession, group);
 				} else {
 					// try to find USER in event
 					if (user != null) {
-						try {
-							resourcesResolvedFromEvent = perun.getUsersManager()
-									.getAllowedResources(perunSession, user);
-						} catch (UserNotExistsException ex) {
-							log.warn("Non-existing user found while resolving event. id={}", user.getId());
-						}
+						resourcesResolvedFromEvent = perunBl.getUsersManagerBl().getAllowedResources(perunSession, user);
 					} else {
 						// try to find MEMBER in event
 						if (member != null) {
-							try {
-								resourcesResolvedFromEvent = perun.getResourcesManager()
-										.getAllowedResources(perunSession, member);
-							} catch (MemberNotExistsException ex) {
-								log.warn("Non-existing member found while resolving event. id={}", member.getId());
-							}
+							resourcesResolvedFromEvent = perunBl.getResourcesManagerBl().getAllowedResources(perunSession, member);
 						} else {
 							// try to find HOST in event
 							if (host != null) {
-								try {
-									log.debug("Host found in event.id= {}.", host.getId());
-									facility = perun.getFacilitiesManager().getFacilityForHost(perunSession, host);
-									facilitiesResolvedFromEvent.add(facility);
-									resourcesResolvedFromEvent.addAll(perun.getFacilitiesManager()
-											.getAssignedResources(perunSession, facility));
-								} catch (FacilityNotExistsException ex) {
-									log.warn(
-											"Host on non-existing facility found while resolving event. Host id={}",
-											host.getId());
-								} catch (HostNotExistsException ex) {
-									log.warn("Non-existing host found while resolving event. id={}", host.getId());
-								}
+								log.debug("Host found in event.id= {}.", host.getId());
+								facility = perunBl.getFacilitiesManagerBl().getFacilityForHost(perunSession, host);
+								resourcesResolvedFromEvent.addAll(perunBl.getFacilitiesManagerBl().getAssignedResources(perunSession, facility));
 							} else {
 								log.warn("No match found for this event. Event={}", event);
 							}
@@ -216,9 +185,13 @@ public class EventServiceResolverImpl implements EventServiceResolver {
 		}
 
 		// Try to find SERVICE in event
-		// TODO resolve more than one service
 		if (service != null) {
 			servicesResolvedFromEvent.add(service);
+		}
+
+		// add other services from event if present
+		if (event instanceof ServicesEvent) {
+			servicesResolvedFromEvent.addAll(((ServicesEvent) event).getServices());
 		}
 
 		// FIXME - Following code is commented since we don't want to start propagation for messages like "ServiceUpdated".
@@ -246,30 +219,18 @@ public class EventServiceResolverImpl implements EventServiceResolver {
 
 			Facility facilityResolvedFromEvent;
 			List<Service> servicesResolvedFromResource;
-			try {
-				facilityResolvedFromEvent = perun.getResourcesManager().getFacility(perunSession, r);
-				servicesResolvedFromResource = perun.getResourcesManager().getAssignedServices(perunSession, r);
-				// process only services resolved from event if any
-				if (!servicesResolvedFromEvent.isEmpty())
-					servicesResolvedFromResource.retainAll(servicesResolvedFromEvent);
-			} catch (ResourceNotExistsException ex) {
-				log.error("Non-existing resource found while resolving event. Resource={}", r);
-				continue; // skip to next resource
-			}
+
+			facilityResolvedFromEvent = perunBl.getResourcesManagerBl().getFacility(perunSession, r);
+			servicesResolvedFromResource = perunBl.getResourcesManagerBl().getAssignedServices(perunSession, r);
+			// process only services resolved from event if any
+			if (!servicesResolvedFromEvent.isEmpty()) servicesResolvedFromResource.retainAll(servicesResolvedFromEvent);
+
 
 			for (Service s : servicesResolvedFromResource) {
 
 				if (attributeDefinition != null) {
-					// remove from future processing services
-					// which don't require the found attribute
-					// TODO (CHECKME) This method can raise
-					// ServiceNotExistsException. Is it ok? Or it must be
-					// catch?
-					List<AttributeDefinition> serviceRequiredAttributes = perun
-							.getAttributesManager()
-							.getRequiredAttributesDefinition(perunSession, s);
-					if (!serviceRequiredAttributes.contains(attributeDefinition))
-						continue;
+					List<AttributeDefinition> serviceRequiredAttributes = perunBl.getAttributesManagerBl().getRequiredAttributesDefinition(perunSession, s);
+					if (!serviceRequiredAttributes.contains(attributeDefinition)) continue;
 				}
 
 				if(!result.containsKey(facilityResolvedFromEvent)) {
