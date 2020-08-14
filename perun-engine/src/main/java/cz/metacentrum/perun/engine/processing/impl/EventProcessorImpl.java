@@ -1,8 +1,6 @@
 package cz.metacentrum.perun.engine.processing.impl;
 
 import cz.metacentrum.perun.core.api.exceptions.InternalErrorException;
-import cz.metacentrum.perun.core.api.exceptions.PrivilegeException;
-import cz.metacentrum.perun.core.api.exceptions.ServiceNotExistsException;
 import cz.metacentrum.perun.engine.exceptions.InvalidEventMessageException;
 import cz.metacentrum.perun.taskslib.exceptions.TaskStoreException;
 import cz.metacentrum.perun.engine.processing.EventParser;
@@ -16,8 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @org.springframework.stereotype.Service(value = "eventProcessor")
 public class EventProcessorImpl implements EventProcessor {
 
-	private final static Logger log = LoggerFactory
-			.getLogger(EventProcessorImpl.class);
+	private final static Logger log = LoggerFactory.getLogger(EventProcessorImpl.class);
 
 	@Autowired
 	private EventParser eventParser;
@@ -27,26 +24,25 @@ public class EventProcessorImpl implements EventProcessor {
 
 	@Override
 	public void receiveEvent(String event) {
-		log.debug("Event {} is going to be resolved.", event);
+
+		log.trace("Event is going to be resolved {}.", event);
 
 		Task task = null;
 		try {
 			task = eventParser.parseEvent(event);
-
 		} catch (InvalidEventMessageException | InternalErrorException e) {
-			log.error(e.toString());
+			log.error("", e);
 		}
 
 		if (task == null) {
 			log.debug("Task not found in event {}", event);
 			return;
 		}
+
 		task.setStatus(Task.TaskStatus.PLANNED);
 
-		log.info("Current pool size BEFORE event processing: {}", schedulingPool.getSize());
+		log.debug("[{}] Pool size BEFORE event processing: {}", task.getId(), schedulingPool.getSize());
 
-		log.debug("\t Resolved Facility[{}]", task.getFacility());
-		log.debug("\t Resolved Service[{}]", task.getService());
 		if (task.getFacility() != null && task.getService() != null) {
 			log.debug("[{}] Check if Task exist in SchedulingPool: {}", task.getId(), task);
 			Task currentTask = schedulingPool.getTask(task.getId());
@@ -61,11 +57,10 @@ public class EventProcessorImpl implements EventProcessor {
 			} else {
 				// since we always remove Task from pool at the end and Dispatcher doesn't send partial Destinations,
 				// we don't need to update existing Task object !! Let engine finish the processing.
-				log.debug("[{}] Task found in SchedulingPool, message skipped.", task.getId(), currentTask);
+				log.debug("[{}] Task found in SchedulingPool, message skipped. Local Task: {}", task.getId(), currentTask);
 			}
 		}
-		log.debug("[{}] POOL SIZE: {}", task.getId(), schedulingPool.getSize());
-		log.info("[{}] Current pool size AFTER event processing: {}", task.getId(), schedulingPool.getSize());
+		log.debug("[{}] Pool size AFTER event processing: {}", task.getId(), schedulingPool.getSize());
 	}
 
 	public EventParser getEventParser() {

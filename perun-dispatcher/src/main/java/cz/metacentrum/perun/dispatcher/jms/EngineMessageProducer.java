@@ -62,22 +62,19 @@ public class EngineMessageProducer {
 	 * Send JMS message to the Engine associated with this queue.
 	 *
 	 * @param text Message content
+	 * @throws JMSException when sending fails
 	 */
-	public void sendMessage(String text) {
+	public void sendMessage(String text) throws JMSException {
 
 		try {
 			// Step 7. Create a Text Message
-			TextMessage message = session.createTextMessage("task|" + text);
+			TextMessage message = session.createTextMessage(text);
 			// Step 8. Send...
 			producer.send(message);
-			if (log.isDebugEnabled()) {
-				log.debug("Sent message (queue:" + queueName + "): " + message.getText());
-			}
-		} catch (JMSException e) {
-			log.error(e.toString(), e);
+			log.debug("Sent message (queue:{}): {}", queueName, message.getText());
 		} catch (Exception e) {
 			log.error(e.toString(), e);
-			// TODO: Restart connection...?
+			throw e;
 		}
 	}
 
@@ -90,9 +87,9 @@ public class EngineMessageProducer {
 		return queueName;
 	}
 
-	/** 
+	/**
 	 * Shutdown before destroying the producer.
-	 * 
+	 *
 	 */
 	public void shutdown() {
 		try {

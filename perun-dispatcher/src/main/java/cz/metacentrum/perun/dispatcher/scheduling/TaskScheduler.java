@@ -1,5 +1,9 @@
 package cz.metacentrum.perun.dispatcher.scheduling;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.metacentrum.perun.core.api.Destination;
 import cz.metacentrum.perun.core.api.Facility;
 import cz.metacentrum.perun.core.api.Perun;
@@ -22,20 +26,22 @@ import cz.metacentrum.perun.taskslib.model.TaskResult;
 import cz.metacentrum.perun.taskslib.model.TaskSchedule;
 import cz.metacentrum.perun.taskslib.runners.impl.AbstractRunner;
 
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
+import javax.jms.JMSException;
 
 import static cz.metacentrum.perun.dispatcher.scheduling.impl.TaskScheduled.*;
 
@@ -60,6 +66,46 @@ public class TaskScheduler extends AbstractRunner {
 	private DelayQueue<TaskSchedule> waitingTasksQueue;
 	private DelayQueue<TaskSchedule> waitingForcedTasksQueue;
 	private TasksManagerBl tasksManagerBl;
+
+	private static final Map<Class<?>,Class<?>> mixinMap = new HashMap<>();
+	private static final ObjectMapper mapper = new ObjectMapper();
+
+	@JsonIgnoreProperties({"beanName"})
+	private interface TaskMixIn {
+
+		@JsonIgnore
+		LocalDateTime getSchedule();
+
+		@JsonIgnore
+		LocalDateTime getSentToEngine();
+
+		@JsonIgnore
+		LocalDateTime getEndTime();
+
+		@JsonIgnore
+		LocalDateTime getStartTime();
+
+		@JsonIgnore
+		LocalDateTime getGenStartTime();
+
+		@JsonIgnore
+		LocalDateTime getGenEndTime();
+
+		@JsonIgnore
+		LocalDateTime getSendStartTime();
+
+		@JsonIgnore
+		LocalDateTime getSendEndTime();
+
+	}
+
+	static {
+		mapper.enableDefaultTyping();
+		// TODO - skip any problematic properties using interfaces for mixins
+		mixinMap.put(Task.class, TaskMixIn.class);
+
+		mapper.setMixIns(mixinMap);
+	}
 
 	// ----- setters -------------------------------------
 
@@ -283,8 +329,6 @@ public class TaskScheduler extends AbstractRunner {
 			return ERROR;
 		}
 
-		// task|[task_id][is_forced][exec_service_id][facility]|[destination_list]|[dependency_list]
-		// - the task|[engine_id] part is added by dispatcherQueue
 		List<Destination> destinations = task.getDestinations();
 		if (task.isSourceUpdated() || destinations == null || destinations.isEmpty()) {
 			log.trace("[{}] No destinations for task, trying to query the database.", task.getId());
@@ -355,45 +399,26 @@ public class TaskScheduler extends AbstractRunner {
 
 		task.setDestinations(destinations);
 
-		// construct JMS message for Engine
+		try {
 
-		StringBuilder destinations_s = new StringBuilder("Destinations [");
-		if (destinations != null) {
-			for (Destination destination : destinations) {
-				destinations_s.append(destination.serializeToString()).append(", ");
-			}
+			// update state
+			task.setSentToEngine(LocalDateTime.now());
+			task.setStatus(Task.TaskStatus.PLANNED);
+
+			// send message
+			String message = mapper.writeValueAsString(task);
+			engineMessageProducer.sendMessage(message);
+
+			// re-set forced flag
+			task.setPropagationForced(false);
+
+			return SUCCESS;
+
+		} catch (JsonProcessingException | JMSException e) {
+			log.error("{} couldn't be sent to engine.", task, e);
+			return QUEUE_ERROR;
 		}
-		destinations_s.append("]");
 
-		// send message async
-
-		engineMessageProducer.sendMessage("[" + task.getId() + "]["
-				+ task.isPropagationForced() + "]|["
-				+ fixStringSeparators(task.getService().serializeToString()) + "]|["
-				+ fixStringSeparators(task.getFacility().serializeToString()) + "]|["
-				+ fixStringSeparators(destinations_s.toString()) + "]");
-
-		// modify task status and reset forced flag
-
-		task.setSentToEngine(LocalDateTime.now());
-		task.setStatus(Task.TaskStatus.PLANNED);
-		task.setPropagationForced(false);
-		return SUCCESS;
-
-	}
-
-	/**
-	 * Encode string to base64 when it contains any message divider character "|".
-	 *
-	 * @param data Data to be checked
-	 * @return Base64 encoded string if needed or original string
-	 */
-	private String fixStringSeparators(String data) {
-		if (data.contains("|")) {
-			return new String(Base64.encodeBase64(data.getBytes()));
-		} else {
-			return data;
-		}
 	}
 
 	protected void initPerunSession() {

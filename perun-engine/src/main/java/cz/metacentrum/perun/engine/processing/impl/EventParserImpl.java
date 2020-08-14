@@ -1,144 +1,150 @@
 package cz.metacentrum.perun.engine.processing.impl;
 
-import cz.metacentrum.perun.auditparser.AuditParser;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import cz.metacentrum.perun.core.api.Destination;
-import cz.metacentrum.perun.core.api.Facility;
 import cz.metacentrum.perun.core.api.PerunBean;
-import cz.metacentrum.perun.core.api.Service;
-import cz.metacentrum.perun.core.api.exceptions.InternalErrorException;
-import cz.metacentrum.perun.core.api.exceptions.PrivilegeException;
-import cz.metacentrum.perun.core.api.exceptions.ServiceNotExistsException;
 import cz.metacentrum.perun.engine.exceptions.InvalidEventMessageException;
 import cz.metacentrum.perun.engine.processing.EventParser;
+import cz.metacentrum.perun.rpclib.impl.JsonDeserializer;
 import cz.metacentrum.perun.taskslib.model.Task;
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @org.springframework.stereotype.Service(value = "eventParser")
 public class EventParserImpl implements EventParser {
-	private static final Logger log = LoggerFactory
-			.getLogger(EventParserImpl.class);
 
-	@Autowired
-	private Properties propertiesBean;
+	private static final Logger log = LoggerFactory.getLogger(EventParserImpl.class);
+
+	private static final Map<Class<?>,Class<?>> mixinMap = new HashMap<>();
+	private static final ObjectMapper mapper = new ObjectMapper();
+
+	@JsonIgnoreProperties({"beanName"})
+	private interface TaskMixIn {
+
+		@JsonIgnore
+		void setSchedule(LocalDateTime schedule);
+
+		@JsonDeserialize
+		@JsonSetter("scheduleAsLong")
+		void setSchedule(Long scheduleAsLong);
+
+		@JsonIgnore
+		void setSentToEngine(LocalDateTime sentToEngine);
+
+		@JsonDeserialize
+		@JsonSetter("sentToEngineAsLong")
+		void setSentToEngine(Long sentToEngineAsLong);
+
+		@JsonIgnore
+		void setStartTime(LocalDateTime startTime);
+
+		@JsonDeserialize
+		@JsonSetter("startTimeAsLong")
+		void setStartTime(Long startTimeAsLong);
+
+		@JsonIgnore
+		void setEndTime(LocalDateTime endTime);
+
+		@JsonDeserialize
+		@JsonSetter("endTimeAsLong")
+		void setEndTime(Long endTimeAsLong);
+
+		@JsonIgnore
+		void setGenStartTime(LocalDateTime genStartTime);
+
+		@JsonDeserialize
+		@JsonSetter("genStartTimeAsLong")
+		void setGenStartTime(Long genStartTimeAsLong);
+
+		@JsonIgnore
+		void setGenEndTime(LocalDateTime genEndTime);
+
+		@JsonDeserialize
+		@JsonSetter("genEndTimeAsLong")
+		void setGenEndTime(Long genEndTimeAsLong);
+
+		@JsonIgnore
+		void setSendStartTime(LocalDateTime sendStartTime);
+
+		@JsonDeserialize
+		@JsonSetter("sendStartTimeAsLong")
+		void setSendStartTime(Long sendStartTimeAsLong);
+
+		@JsonIgnore
+		void setSendEndTime(LocalDateTime sendEndTime);
+
+		@JsonDeserialize
+		@JsonSetter("sendEndTimeAsLong")
+		void setSendEndTime(Long sendEndTimeAsLong);
+
+		@JsonIgnore
+		LocalDateTime getSchedule();
+
+		@JsonIgnore
+		LocalDateTime getSentToEngine();
+
+		@JsonIgnore
+		LocalDateTime getEndTime();
+
+		@JsonIgnore
+		LocalDateTime getStartTime();
+
+		@JsonIgnore
+		LocalDateTime getGenStartTime();
+
+		@JsonIgnore
+		LocalDateTime getGenEndTime();
+
+		@JsonIgnore
+		LocalDateTime getSendStartTime();
+
+		@JsonIgnore
+		LocalDateTime getSendEndTime();
+
+	}
+
+	static {
+
+		// configure JSON deserializer for dispatcher messages
+		mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+		mapper.enableDefaultTyping();
+
+		mixinMap.put(PerunBean.class, JsonDeserializer.PerunBeanMixIn.class);
+		mixinMap.put(Destination.class, JsonDeserializer.DestinationMixIn.class);
+		mixinMap.put(Task.class, TaskMixIn.class);
+
+		mapper.setMixIns(mixinMap);
+
+	}
 
 	@Override
 	public Task parseEvent(String event) throws InvalidEventMessageException {
 
+		Task task = null;
 
-		log.info("Going to process event: {}", event);
-
-		/*
-		 * Expected string format:
-		 * "task|[task_id][is_forced]|[service]|[facility]|[destination_list]|[dependency_list]"
-		 *
-		 *  String eventParsingPattern =
-		 * "^event\\|([0-9]{1,6})\\|\\[([a-zA-Z0-9: ]+)\\]\\[([^\\]]+)\\]\\[(.*)\\]$";
-		 */
-		String eventParsingPattern = "^task\\|\\[([0-9]+)\\]\\[([^\\]]+)\\]\\|\\[([^\\|]+)\\]\\|\\[([^\\|]+)\\]\\|\\[([^\\|]+)\\]$";
-		Pattern pattern = Pattern.compile(eventParsingPattern);
-		Matcher matcher = pattern.matcher(event);
-		boolean matchFound = matcher.find();
-
-		if (matchFound) {
-			log.debug("Message format matched ok...");
-			// Data should provide information regarding the target Service (Processing rule).
-			String eventTaskId = matcher.group(1);
-			String eventIsForced = matcher.group(2);
-			String eventService = matcher.group(3);
-			String eventFacility = matcher.group(4);
-			String eventDestinationList = matcher.group(5);
-
-			// check possible enconding
-			if (!eventService.startsWith("Service")) {
-				eventService = new String(Base64.decodeBase64(eventService));
-			}
-			if (!eventService.startsWith("Service")) {
-				throw new InvalidEventMessageException("Wrong exec service: parse exception");
-			}
-			if (!eventFacility.startsWith("Facility")) {
-				eventFacility = new String(Base64.decodeBase64(eventFacility));
-			}
-			if (!eventFacility.startsWith("Facility")) {
-				throw new InvalidEventMessageException("Wrong facility: parse exception");
-			}
-			if (!eventDestinationList.startsWith("Destinations")) {
-				eventDestinationList = new String(Base64.decodeBase64(eventDestinationList));
-			}
-			if (!eventDestinationList.startsWith("Destinations")) {
-				throw new InvalidEventMessageException("Wrong destination list: parse exception");
-			}
-
-			log.debug("Event data to be parsed: task id {}, forced {}, facility {}, service {}, destination list {}",
-					eventTaskId, eventIsForced, eventFacility, eventService, eventDestinationList);
-
-			// Prepare variables
-			Facility facility;
-			Service service;
-			List<Destination> destinationList = new ArrayList<Destination>();
-
-			// resolve facility and deserialize event data
-			List<PerunBean> listOfBeans = AuditParser.parseLog(eventFacility);
-			try {
-				facility = (Facility) listOfBeans.get(0);
-			} catch (Exception e) {
-				throw new InvalidEventMessageException(
-						"Could not resolve facility from event ["
-								+ eventFacility + "]", e);
-			}
-
-			// resolve exec service and deserialize event data
-			listOfBeans = AuditParser.parseLog(eventService);
-			try {
-				service = (Service) listOfBeans.get(0);
-			} catch (Exception e) {
-				throw new InvalidEventMessageException("Could not resolve service from event [" + eventService + "]", e);
-			}
-
-			// resolve list of destinations
-			listOfBeans = AuditParser.parseLog(eventDestinationList);
-			log.debug("Found list of destination beans: {}", listOfBeans);
-			try {
-				for (PerunBean bean : listOfBeans) {
-					destinationList.add((Destination) bean);
-				}
-			} catch (Exception e) {
-				throw new InvalidEventMessageException(
-						"Could not resolve list of destinations from event.", e);
-			}
-
-			Task task = new Task();
-			task.setId(Integer.parseInt(eventTaskId));
-			task.setFacility(facility);
-			task.setService(service);
-			task.setDestinations(destinationList);
-			task.setDelay(service.getDelay());
-			task.setRecurrence(service.getRecurrence());
-			task.setPropagationForced(Boolean.parseBoolean(eventIsForced));
-
-			return task;
-
-		} else {
-			throw new InvalidEventMessageException(
-					"Invalid message format: Message[" + event + "]");
+		try {
+			task = mapper.readValue(event, Task.class);
+		} catch (IOException ex) {
+			log.error("Can't parse JSON of Task!", ex);
+			throw new InvalidEventMessageException("Can't parse JSON of Task!", ex);
 		}
-	}
 
-	public Properties getPropertiesBean() {
-		return propertiesBean;
-	}
+		// re-set delay and recurrence to default state from the service
+		task.setDelay(task.getService().getDelay());
+		task.setRecurrence(task.getService().getRecurrence());
 
-	public void setPropertiesBean(Properties propertiesBean) {
-		this.propertiesBean = propertiesBean;
+		return task;
+
 	}
 
 }

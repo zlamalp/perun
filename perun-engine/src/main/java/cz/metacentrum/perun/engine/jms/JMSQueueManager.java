@@ -13,6 +13,8 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.api.jms.HornetQJMSClient;
 import org.hornetq.api.jms.JMSFactoryType;
@@ -23,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 
-import cz.metacentrum.perun.core.api.Destination;
 import cz.metacentrum.perun.taskslib.model.Task;
 import cz.metacentrum.perun.taskslib.model.TaskResult;
 
@@ -51,6 +52,15 @@ public class JMSQueueManager {
 	private Connection connection = null;
 	private boolean needToConnect = true;
 	private int waitTime = 0;
+
+	private static final Map<Class<?>,Class<?>> mixinMap = new HashMap<>();
+	private static final ObjectMapper mapper = new ObjectMapper();
+
+	static {
+		mapper.enableDefaultTyping();
+		// TODO - skip any problematic properties using interfaces for mixins
+		mapper.setMixIns(mixinMap);
+	}
 
 	/**
 	 *
@@ -160,12 +170,22 @@ public class JMSQueueManager {
 	}
 
 	public void reportTaskResult(TaskResult taskResult) throws JMSException {
-		TextMessage message = session.createTextMessage("taskresult:" + taskResult.serializeToString());
+
+		String stringResult = null;
+		try {
+			stringResult = mapper.writeValueAsString(taskResult);
+		} catch (JsonProcessingException ex) {
+			log.error("[{}] Couldn't write TaskResult JSON {}", taskResult.getTaskId(), ex);
+			return;
+		}
+
+		TextMessage message = session.createTextMessage("taskresult:" + stringResult);
 		synchronized(producer) {
 			producer.send(message, DeliveryMode.PERSISTENT, 2, 0);
 		}
 		log.info("[{}] TaskResult for destination {} sent to dispatcher.", taskResult.getTaskId(),
 				taskResult.getDestinationId());
+
 	}
 
 	public void reportTaskStatus(int id, Task.TaskStatus status, long miliseconds) throws JMSException {

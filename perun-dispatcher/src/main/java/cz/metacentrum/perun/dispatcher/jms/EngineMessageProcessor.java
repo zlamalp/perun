@@ -1,5 +1,6 @@
 package cz.metacentrum.perun.dispatcher.jms;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -10,6 +11,13 @@ import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Session;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.metacentrum.perun.core.api.Destination;
+import cz.metacentrum.perun.core.api.PerunBean;
+import cz.metacentrum.perun.rpclib.impl.JsonDeserializer;
+import cz.metacentrum.perun.taskslib.model.Task;
+import cz.metacentrum.perun.taskslib.model.TaskResult;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.api.jms.HornetQJMSClient;
 import org.hornetq.api.jms.JMSFactoryType;
@@ -61,6 +69,17 @@ public class EngineMessageProcessor {
 	private boolean systemQueueInitiated = false;
 	private ConnectionFactory cf;
 	private Connection connection;
+
+	private static final Map<Class<?>,Class<?>> mixinMap = new HashMap<>();
+	private static final ObjectMapper mapper = new ObjectMapper();
+
+	static {
+		mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+		mapper.enableDefaultTyping();
+		mixinMap.put(PerunBean.class, JsonDeserializer.PerunBeanMixIn.class);
+		// TODO - skip any problematic properties using interfaces for mixins
+		mapper.setMixIns(mixinMap);
+	}
 
 
 	// ----- setters -------------------------------------
@@ -271,12 +290,12 @@ public class EngineMessageProcessor {
 
 			// process expected messages
 			EngineMessageProducer engineMessageProducer;
-			
+
 			if (clientMessageSplitter[0].equalsIgnoreCase("register")) {
 
 				// Do we have this queue already?
 				engineMessageProducer = engineMessageProducerFactory.getProducer();
-				
+
 				if (engineMessageProducer != null) {
 					// ...and close all tasks that could have been running there
 					schedulingPool.closeTasksForEngine();
@@ -314,7 +333,12 @@ public class EngineMessageProcessor {
 					throw new MessageFormatException("Engine sent a malformed message, not enough params [" + message + "]");
 				}
 
-				schedulingPool.onTaskDestinationComplete(clientMessageSplitter[1]);
+				try {
+					TaskResult result = mapper.readValue(clientMessageSplitter[1], TaskResult.class);
+					schedulingPool.onTaskDestinationComplete(result);
+				} catch (IOException ex) {
+					log.error("Can't parse JSON of TaskResult! {}", clientMessageSplitter[1], ex);
+				}
 
 			} else {
 				throw new MessageFormatException("Engine sent a malformed message, unknown type of message [" + message + "]");
