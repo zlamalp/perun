@@ -46,4 +46,11 @@ public class CsrfToken {
 		this.value = value;
 	}
 
+	@Override
+	public String toString() {
+		return "CsrfToken:[" +
+				"value='" + value + '\'' +
+				']';
+	}
+
 }

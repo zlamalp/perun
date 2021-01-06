@@ -90,6 +90,7 @@ public final class CsrfFilter implements Filter {
 				log.debug("Missing CSRF token - generating new.");
 				cookieCsrfToken = generateToken();
 				saveToken(cookieCsrfToken, request, response);
+				log.trace("Token: {}", cookieCsrfToken);
 			}
 
 			// Skip this filter for unprotected methods GET | HEAD | TRACE | OPTIONS
