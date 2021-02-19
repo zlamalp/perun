@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.WebUtils;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+
 /**
  * This is an implementation of CSRF protection based on Spring framework solution.
  *
@@ -47,7 +49,9 @@ import org.springframework.web.util.WebUtils;
  *
  * On each request, where Cookie is not present, Token is generated and set to the Session.
  * On any state changing request, CsrfToken value must match between Cookie, Header and Session.
- * Check for "GET", "HEAD", "TRACE", "OPTIONS" HTTP methods is disabled.
+ *
+ * Check is disabled for "GET", "HEAD", "TRACE" and "OPTIONS" HTTP requests.
+ * Check is disabled for OIDC endpoint.
  *
  * @see CsrfToken
  *
@@ -62,23 +66,26 @@ public final class CsrfFilter implements Filter {
 	private static final String CSRF_HEADER_NAME = "X-XSRF-TOKEN";
 	private static final String CSRF_REQUEST_ATTR_NAME = CsrfToken.class.getName();
 
+	private static final String OIDC_CLAIM_SUB = "OIDC_CLAIM_sub";
+
 	public CsrfFilter() {
 	}
 
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
-
+		if (!BeansUtils.getCoreConfig().isCsrfProtectionEnabled()) log.warn("CSRF protection is disabled!");
 	}
 
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
-		if (servletRequest instanceof HttpServletRequest && servletResponse instanceof HttpServletResponse) {
+		HttpServletRequest request = (HttpServletRequest)servletRequest;
+		HttpServletResponse response = (HttpServletResponse)servletResponse;
+
+		// Perform CSRF check only if CSRF protection is enabled and its not OIDC endpoint
+		if (BeansUtils.getCoreConfig().isCsrfProtectionEnabled() && isEmpty(request.getHeader(OIDC_CLAIM_SUB))) {
 
 			log.trace("Processing CSRF filter.");
-
-			HttpServletRequest request = (HttpServletRequest)servletRequest;
-			HttpServletResponse response = (HttpServletResponse)servletResponse;
 
 			// get all instances of tokens
 			CsrfToken httpSessionToken = (CsrfToken)request.getSession(true).getAttribute(CSRF_REQUEST_ATTR_NAME);
@@ -93,15 +100,10 @@ public final class CsrfFilter implements Filter {
 				log.trace("Token: {}", cookieCsrfToken);
 			}
 
-			// Skip this filter for unprotected methods GET | HEAD | TRACE | OPTIONS
+			// Skip actual check for unprotected methods GET | HEAD | TRACE | OPTIONS
 			if (this.allowedMethods.contains(request.getMethod())) {
 				log.trace("Skip CSRF check on GET | HEAD | TRACE | OPTIONS method.");
 				filterChain.doFilter(request, response);
-				return;
-			}
-			// Is CSRF protection enabled ?
-			if (!BeansUtils.getCoreConfig().isCsrfProtectionEnabled()) {
-				filterChain.doFilter(servletRequest, servletResponse);
 				return;
 			}
 
@@ -141,17 +143,10 @@ public final class CsrfFilter implements Filter {
 
 			log.trace("Tokens match SESSION: {} | COOKIE: {} | HEADER: {}.", httpSessionToken.getValue(), cookieCsrfToken.getValue(), actualToken);
 
-			// continue to the next filter
-			filterChain.doFilter(request, response);
-
-		} else {
-
-			log.trace("Processing CSRF filter skipped.");
-
-			// this filter was not applied - continue to the next filter
-			filterChain.doFilter(servletRequest, servletResponse);
-
 		}
+
+		// Pass all logic to next filter
+		filterChain.doFilter(servletRequest, servletResponse);
 
 	}
 
